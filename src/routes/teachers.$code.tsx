@@ -248,11 +248,38 @@ function TabBar({ tab, setTab, hasSyllabus }: { tab: Tab; setTab: (t: Tab) => vo
 
 function SyllabusViewer({ teacher }: { teacher: Teacher }) {
   const url = teacher.syllabusPdf!;
-  const openFs = () => window.open(url, "_blank", "noopener,noreferrer");
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let revoked = false;
+    let createdUrl: string | null = null;
+    setBlobUrl(null);
+    setError(null);
+    (async () => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Failed (${res.status})`);
+        const blob = await res.blob();
+        const pdfBlob = blob.type === "application/pdf" ? blob : new Blob([blob], { type: "application/pdf" });
+        createdUrl = URL.createObjectURL(pdfBlob);
+        if (!revoked) setBlobUrl(createdUrl);
+      } catch (e) {
+        if (!revoked) setError(e instanceof Error ? e.message : "Could not load syllabus");
+      }
+    })();
+    return () => {
+      revoked = true;
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
+    };
+  }, [url]);
+
+  const openFs = () => window.open(blobUrl ?? url, "_blank", "noopener,noreferrer");
   const printIt = () => {
-    const w = window.open(url, "_blank");
+    const w = window.open(blobUrl ?? url, "_blank");
     if (w) w.addEventListener("load", () => w.print());
   };
+
   return (
     <section className="card-soft overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border p-3">
@@ -263,14 +290,15 @@ function SyllabusViewer({ teacher }: { teacher: Teacher }) {
         <div className="flex gap-1.5">
           <a
             href={url}
-            download
+            download={`${teacher.code}-syllabus.pdf`}
             className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary/80"
           >
             <Download className="h-3.5 w-3.5" /> Download
           </a>
           <button
             onClick={printIt}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary/80"
+            disabled={!blobUrl}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary/80 disabled:opacity-50"
           >
             <Printer className="h-3.5 w-3.5" /> Print
           </button>
@@ -278,20 +306,37 @@ function SyllabusViewer({ teacher }: { teacher: Teacher }) {
             onClick={openFs}
             className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
-            <Maximize2 className="h-3.5 w-3.5" /> Fullscreen
+            <Maximize2 className="h-3.5 w-3.5" /> Open
           </button>
         </div>
       </div>
       <div className="bg-secondary/30">
-        <iframe
-          src={`${url}#view=FitH`}
-          title={`${teacher.fullName} monthly syllabus`}
-          className="h-[80vh] w-full"
-        />
+        {error ? (
+          <div className="flex h-[60vh] flex-col items-center justify-center gap-3 p-6 text-center">
+            <p className="text-sm text-muted-foreground">Couldn't preview the PDF here. {error}</p>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-xl bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+            >
+              Open syllabus in new tab
+            </a>
+          </div>
+        ) : !blobUrl ? (
+          <div className="flex h-[60vh] items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : (
+          <object data={`${blobUrl}#view=FitH`} type="application/pdf" className="h-[80vh] w-full">
+            <iframe src={blobUrl} title={`${teacher.fullName} monthly syllabus`} className="h-[80vh] w-full" />
+          </object>
+        )}
       </div>
     </section>
   );
 }
+
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
