@@ -62,24 +62,38 @@ export interface Teacher {
   shortName: string;
   fullName: string;
   position: string;
-  color: string; // semantic hex; pairs with white text
-  colorSoft: string; // soft bg
+  color: string; // EXACT colour from the official PDF legend
+  colorSoft: string; // soft bg derived from color
+  syllabusPdf?: string; // url to monthly syllabus pdf page
 }
 
+// Colours below are read directly from the official timetable PDF legend
+// (Page 3 of NEW TT 3.pdf). Do not redesign or replace them.
 export const TEACHERS: Teacher[] = [
-  { code: "HU",  shortName: "HU",  fullName: "Hassan Hudawi",          position: "Usthad", color: "#0E8C5C", colorSoft: "#D6F1E5" },
-  { code: "ZU",  shortName: "ZU",  fullName: "Muhammed Zaini",         position: "Usthad", color: "#B45309", colorSoft: "#FDEBD0" },
-  { code: "HW",  shortName: "HW",  fullName: "Haneefa Wafy",           position: "Usthad", color: "#0369A1", colorSoft: "#D8ECF8" },
-  { code: "SF",  shortName: "SF",  fullName: "Shafeeq Faizy",          position: "Usthad", color: "#BE123C", colorSoft: "#FCDDE6" },
-  { code: "SH",  shortName: "SH",  fullName: "Swalih Hudawi",          position: "Usthad", color: "#6D28D9", colorSoft: "#E4DAF8" },
-  { code: "SW",  shortName: "SW",  fullName: "Sufaid Wafy",            position: "Usthad", color: "#0F766E", colorSoft: "#D2EEEB" },
-  { code: "SSH", shortName: "SSH", fullName: "Sayyid Shafi Hudawi",    position: "Usthad", color: "#C2410C", colorSoft: "#FBDFCE" },
-  { code: "AJR", shortName: "AJR", fullName: "Azhar Jamal Rahmani",    position: "Usthad", color: "#4338CA", colorSoft: "#DEDCF6" },
-  { code: "KF",  shortName: "KF",  fullName: "Kamil Faizy",            position: "Usthad", color: "#DB2777", colorSoft: "#FBDAEB" },
-  { code: "AF",  shortName: "AF",  fullName: "Ajsal Faizy",            position: "Usthad", color: "#65A30D", colorSoft: "#E6F2D2" },
-  { code: "NF",  shortName: "NF",  fullName: "Nisar Faizy",            position: "Usthad", color: "#0891B2", colorSoft: "#D2ECF3" },
-  { code: "SN",  shortName: "SN",  fullName: "Sinan Nadwi",            position: "Usthad", color: "#A21CAF", colorSoft: "#F2D8F4" },
+  { code: "HU",  shortName: "HU",  fullName: "Hassan Hudawi",          position: "Usthad", color: "#547F35", colorSoft: "#E3EDD7", syllabusPdf: "/syllabus/HU.pdf"  },
+  { code: "ZU",  shortName: "ZU",  fullName: "Muhammed Zaini",         position: "Usthad", color: "#FFFF00", colorSoft: "#FFFFCC", syllabusPdf: "/syllabus/ZU.pdf"  },
+  { code: "HW",  shortName: "HW",  fullName: "Haneefa Wafy",           position: "Usthad", color: "#7030A0", colorSoft: "#E2D4ED", syllabusPdf: "/syllabus/HW.pdf"  },
+  { code: "SF",  shortName: "SF",  fullName: "Shafeeq Faizy",          position: "Usthad", color: "#4E41F9", colorSoft: "#DDD9FD", syllabusPdf: "/syllabus/SF.pdf"  },
+  { code: "SH",  shortName: "SH",  fullName: "Swalih Hudawi",          position: "Usthad", color: "#92D050", colorSoft: "#E4F2D2", syllabusPdf: "/syllabus/SH.pdf"  },
+  { code: "SW",  shortName: "SW",  fullName: "Sufaid Wafy",            position: "Usthad", color: "#AA4D0E", colorSoft: "#F2D9C6", syllabusPdf: "/syllabus/SW.pdf"  },
+  { code: "SSH", shortName: "SSH", fullName: "Sayyid Shafi Hudawi",    position: "Usthad", color: "#00B0F0", colorSoft: "#CCEFFB", syllabusPdf: "/syllabus/SSH.pdf" },
+  { code: "AJR", shortName: "AJR", fullName: "Azhar Jamal Rahmani",    position: "Usthad", color: "#FF6F0D", colorSoft: "#FFDDC2", syllabusPdf: "/syllabus/AJR.pdf" },
+  { code: "KF",  shortName: "KF",  fullName: "Kamil Faizy",            position: "Usthad", color: "#FF0000", colorSoft: "#FFCCCC", syllabusPdf: "/syllabus/KF.pdf"  },
+  { code: "AF",  shortName: "AF",  fullName: "Ajsal Faizy",            position: "Usthad", color: "#BDD7EE", colorSoft: "#E5EFF8", syllabusPdf: "/syllabus/AF.pdf"  },
+  { code: "NF",  shortName: "NF",  fullName: "Nisar Faizy",            position: "Usthad", color: "#FF00FF", colorSoft: "#FFCCFF", syllabusPdf: "/syllabus/NF.pdf"  },
+  { code: "SN",  shortName: "SN",  fullName: "Sinan Nadwi",            position: "Usthad", color: "#FFE699", colorSoft: "#FFF4D1" },
 ];
+
+// Pick readable text colour (black or white) for a given background hex.
+export function textOn(hex: string): "#000000" | "#FFFFFF" {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.substring(0, 2), 16) / 255;
+  const g = parseInt(h.substring(2, 4), 16) / 255;
+  const b = parseInt(h.substring(4, 6), 16) / 255;
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  return L > 0.6 ? "#000000" : "#FFFFFF";
+}
 
 export const TEACHER_BY_CODE: Record<string, Teacher> = Object.fromEntries(
   TEACHERS.map((t) => [t.code, t]),
