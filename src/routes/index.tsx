@@ -8,6 +8,7 @@ import {
   getRemainingPeriodsToday,
   jsDayToCode,
   DAY_LABELS,
+  textOn,
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
 import { useFavorites } from "@/lib/favorites";
