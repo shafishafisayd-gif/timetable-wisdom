@@ -94,8 +94,13 @@ function TeacherPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <TabBar tab={tab} setTab={setTab} hasSyllabus={!!teacher.syllabusPdf} />
+
       {/* Now widget */}
+      {tab === "overview" && (
       <NowCard teacher={teacher} status={status} next={next} remaining={remaining} today={today} />
+      )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
