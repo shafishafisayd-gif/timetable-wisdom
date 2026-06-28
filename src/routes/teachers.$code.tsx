@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Clock, BookOpen, Coffee } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Clock, BookOpen, Coffee, Maximize2, Download, Printer } from "lucide-react";
 import {
   TEACHER_BY_CODE,
   getTeacherSchedule,
@@ -14,6 +15,7 @@ import {
   jsDayToCode,
   workloadPercent,
   formatTime12,
+  textOn,
   type DayCode,
   type Teacher,
 } from "@/data/timetable";
@@ -43,6 +45,8 @@ export const Route = createFileRoute("/teachers/$code")({
   ),
 });
 
+type Tab = "overview" | "today" | "weekly" | "syllabus";
+
 function TeacherPage() {
   const { code } = Route.useParams();
   const teacher = TEACHER_BY_CODE[code]!;
@@ -54,6 +58,8 @@ function TeacherPage() {
   const next = getNextPeriodForTeacher(code, now);
   const today = jsDayToCode(now.getDay());
   const workload = workloadPercent(code);
+  const fg = textOn(teacher.color);
+  const [tab, setTab] = useState<Tab>("overview");
 
   return (
     <div className="space-y-5">
@@ -66,7 +72,7 @@ function TeacherPage() {
         <div className="h-2" style={{ backgroundColor: teacher.color }} />
         <div className="p-5">
           <div className="flex items-center gap-4">
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-xl font-bold text-white" style={{ backgroundColor: teacher.color }}>
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-xl font-bold" style={{ backgroundColor: teacher.color, color: fg }}>
               {teacher.shortName}
             </div>
             <div className="min-w-0">
@@ -88,18 +94,26 @@ function TeacherPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <TabBar tab={tab} setTab={setTab} hasSyllabus={!!teacher.syllabusPdf} />
+
       {/* Now widget */}
+      {tab === "overview" && (
       <NowCard teacher={teacher} status={status} next={next} remaining={remaining} today={today} />
+      )}
 
       {/* Stats grid */}
+      {tab === "overview" && (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Weekly Periods" value={stats.totalWeeklyPeriods} />
         <StatCard label="Classes" value={stats.totalClasses} />
         <StatCard label="Subjects" value={stats.subjects.length} />
         <StatCard label="Teaching Hrs" value={`${(stats.totalWeeklyPeriods * 0.67).toFixed(1)}`} />
       </div>
+      )}
 
       {/* Subjects + classes */}
+      {tab === "overview" && (
       <div className="card-soft p-4">
         <h3 className="text-sm font-semibold text-foreground">Teaches</h3>
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -110,13 +124,14 @@ function TeacherPage() {
         <h3 className="mt-4 text-sm font-semibold text-foreground">Classes Assigned</h3>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {stats.classesAssigned.map((c) => (
-            <span key={c} className="rounded-full px-2.5 py-1 text-xs font-bold text-white" style={{ backgroundColor: teacher.color }}>{c}</span>
+            <span key={c} className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ backgroundColor: teacher.color, color: fg }}>{c}</span>
           ))}
         </div>
       </div>
+      )}
 
       {/* Today's timetable */}
-      {today && (
+      {(tab === "overview" || tab === "today") && today && (
         <section className="card-soft p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Today · {DAY_LABELS[today]}</h3>
@@ -160,6 +175,7 @@ function TeacherPage() {
       )}
 
       {/* Weekly timetable */}
+      {(tab === "overview" || tab === "weekly") && (
       <section className="card-soft p-4">
         <h3 className="text-sm font-semibold text-foreground">Weekly Timetable</h3>
         <div className="mt-3 -mx-4 overflow-x-auto hide-scrollbar px-4">
@@ -181,7 +197,7 @@ function TeacherPage() {
                     return (
                       <td key={p} className="align-top">
                         {slot ? (
-                          <div className="rounded-xl px-2 py-1.5 text-[11px] font-semibold text-white shadow-sm" style={{ backgroundColor: teacher.color }}>
+                          <div className="rounded-xl px-2 py-1.5 text-[11px] font-semibold shadow-sm" style={{ backgroundColor: teacher.color, color: fg }}>
                             <div className="font-bold">{slot.className}</div>
                             <div className="opacity-90">{slot.subject}</div>
                           </div>
@@ -197,7 +213,83 @@ function TeacherPage() {
           </table>
         </div>
       </section>
+      )}
+
+      {tab === "syllabus" && <SyllabusViewer teacher={teacher} />}
     </div>
+  );
+}
+
+function TabBar({ tab, setTab, hasSyllabus }: { tab: Tab; setTab: (t: Tab) => void; hasSyllabus: boolean }) {
+  const items: { id: Tab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "today", label: "Today" },
+    { id: "weekly", label: "Weekly" },
+    ...(hasSyllabus ? [{ id: "syllabus" as Tab, label: "Monthly Syllabus" }] : []),
+  ];
+  return (
+    <div className="card-soft -mx-1 flex gap-1.5 overflow-x-auto p-1.5 hide-scrollbar">
+      {items.map((it) => (
+        <button
+          key={it.id}
+          onClick={() => setTab(it.id)}
+          className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+            tab === it.id
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+          }`}
+        >
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SyllabusViewer({ teacher }: { teacher: Teacher }) {
+  const url = teacher.syllabusPdf!;
+  const openFs = () => window.open(url, "_blank", "noopener,noreferrer");
+  const printIt = () => {
+    const w = window.open(url, "_blank");
+    if (w) w.addEventListener("load", () => w.print());
+  };
+  return (
+    <section className="card-soft overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border p-3">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Monthly Syllabus</h3>
+          <p className="text-xs text-muted-foreground">{teacher.fullName} · June – October</p>
+        </div>
+        <div className="flex gap-1.5">
+          <a
+            href={url}
+            download
+            className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary/80"
+          >
+            <Download className="h-3.5 w-3.5" /> Download
+          </a>
+          <button
+            onClick={printIt}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary/80"
+          >
+            <Printer className="h-3.5 w-3.5" /> Print
+          </button>
+          <button
+            onClick={openFs}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            <Maximize2 className="h-3.5 w-3.5" /> Fullscreen
+          </button>
+        </div>
+      </div>
+      <div className="bg-secondary/30">
+        <iframe
+          src={`${url}#view=FitH`}
+          title={`${teacher.fullName} monthly syllabus`}
+          className="h-[80vh] w-full"
+        />
+      </div>
+    </section>
   );
 }
 
@@ -257,7 +349,7 @@ function NowCard({
   return (
     <div
       className={`card-lift overflow-hidden p-5 ${isTeaching ? "" : bg} ${isTeaching ? "" : fg}`}
-      style={isTeaching ? { backgroundColor: teacher.color, color: "white" } : undefined}
+      style={isTeaching ? { backgroundColor: teacher.color, color: textOn(teacher.color) } : undefined}
     >
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-80">
         {icon} {title}

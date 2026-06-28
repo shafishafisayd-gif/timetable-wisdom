@@ -8,6 +8,7 @@ import {
   getRemainingPeriodsToday,
   jsDayToCode,
   DAY_LABELS,
+  textOn,
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
 import { useFavorites } from "@/lib/favorites";
@@ -121,8 +122,8 @@ function Index() {
               <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                 <div className="flex min-w-0 items-center gap-3">
                   <div
-                    className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-lg font-bold text-white"
-                    style={{ backgroundColor: t.color }}
+                    className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-lg font-bold"
+                    style={{ backgroundColor: t.color, color: textOn(t.color) }}
                   >
                     {t.shortName}
                   </div>

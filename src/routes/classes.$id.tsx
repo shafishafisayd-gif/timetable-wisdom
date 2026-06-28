@@ -9,6 +9,7 @@ import {
   PERIOD_TIMES,
   TEACHER_BY_CODE,
   formatTime12,
+  textOn,
   type ClassId,
 } from "@/data/timetable";
 
@@ -76,7 +77,7 @@ function ClassDetail() {
                     const teacher = TEACHER_BY_CODE[slot.teacher];
                     return (
                       <td key={p}>
-                        <Link to="/teachers/$code" params={{ code: slot.teacher }} className="block rounded-xl px-2 py-1.5 text-[11px] font-semibold text-white" style={{ backgroundColor: teacher?.color }}>
+                        <Link to="/teachers/$code" params={{ code: slot.teacher }} className="block rounded-xl px-2 py-1.5 text-[11px] font-semibold" style={{ backgroundColor: teacher?.color, color: teacher ? textOn(teacher.color) : "#fff" }}>
                           <div className="truncate font-bold">{slot.subject}</div>
                           <div className="opacity-90">{slot.teacher}</div>
                         </Link>
