@@ -72,7 +72,7 @@ function TeacherPage() {
         <div className="h-2" style={{ backgroundColor: teacher.color }} />
         <div className="p-5">
           <div className="flex items-center gap-4">
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-xl font-bold text-white" style={{ backgroundColor: teacher.color }}>
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl text-xl font-bold" style={{ backgroundColor: teacher.color, color: fg }}>
               {teacher.shortName}
             </div>
             <div className="min-w-0">
