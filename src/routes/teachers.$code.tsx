@@ -45,6 +45,8 @@ export const Route = createFileRoute("/teachers/$code")({
   ),
 });
 
+type Tab = "overview" | "today" | "weekly" | "syllabus";
+
 function TeacherPage() {
   const { code } = Route.useParams();
   const teacher = TEACHER_BY_CODE[code]!;
@@ -56,6 +58,8 @@ function TeacherPage() {
   const next = getNextPeriodForTeacher(code, now);
   const today = jsDayToCode(now.getDay());
   const workload = workloadPercent(code);
+  const fg = textOn(teacher.color);
+  const [tab, setTab] = useState<Tab>("overview");
 
   return (
     <div className="space-y-5">
