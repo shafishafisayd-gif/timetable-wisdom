@@ -103,14 +103,17 @@ function TeacherPage() {
       )}
 
       {/* Stats grid */}
+      {tab === "overview" && (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Weekly Periods" value={stats.totalWeeklyPeriods} />
         <StatCard label="Classes" value={stats.totalClasses} />
         <StatCard label="Subjects" value={stats.subjects.length} />
         <StatCard label="Teaching Hrs" value={`${(stats.totalWeeklyPeriods * 0.67).toFixed(1)}`} />
       </div>
+      )}
 
       {/* Subjects + classes */}
+      {tab === "overview" && (
       <div className="card-soft p-4">
         <h3 className="text-sm font-semibold text-foreground">Teaches</h3>
         <div className="mt-3 flex flex-wrap gap-1.5">
@@ -125,9 +128,10 @@ function TeacherPage() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Today's timetable */}
-      {today && (
+      {(tab === "overview" || tab === "today") && today && (
         <section className="card-soft p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Today · {DAY_LABELS[today]}</h3>
@@ -171,6 +175,7 @@ function TeacherPage() {
       )}
 
       {/* Weekly timetable */}
+      {(tab === "overview" || tab === "weekly") && (
       <section className="card-soft p-4">
         <h3 className="text-sm font-semibold text-foreground">Weekly Timetable</h3>
         <div className="mt-3 -mx-4 overflow-x-auto hide-scrollbar px-4">
@@ -208,7 +213,83 @@ function TeacherPage() {
           </table>
         </div>
       </section>
+      )}
+
+      {tab === "syllabus" && <SyllabusViewer teacher={teacher} />}
     </div>
+  );
+}
+
+function TabBar({ tab, setTab, hasSyllabus }: { tab: Tab; setTab: (t: Tab) => void; hasSyllabus: boolean }) {
+  const items: { id: Tab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "today", label: "Today" },
+    { id: "weekly", label: "Weekly" },
+    ...(hasSyllabus ? [{ id: "syllabus" as Tab, label: "Monthly Syllabus" }] : []),
+  ];
+  return (
+    <div className="card-soft -mx-1 flex gap-1.5 overflow-x-auto p-1.5 hide-scrollbar">
+      {items.map((it) => (
+        <button
+          key={it.id}
+          onClick={() => setTab(it.id)}
+          className={`shrink-0 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
+            tab === it.id
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+          }`}
+        >
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SyllabusViewer({ teacher }: { teacher: Teacher }) {
+  const url = teacher.syllabusPdf!;
+  const openFs = () => window.open(url, "_blank", "noopener,noreferrer");
+  const printIt = () => {
+    const w = window.open(url, "_blank");
+    if (w) w.addEventListener("load", () => w.print());
+  };
+  return (
+    <section className="card-soft overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border p-3">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Monthly Syllabus</h3>
+          <p className="text-xs text-muted-foreground">{teacher.fullName} · June – October</p>
+        </div>
+        <div className="flex gap-1.5">
+          <a
+            href={url}
+            download
+            className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary/80"
+          >
+            <Download className="h-3.5 w-3.5" /> Download
+          </a>
+          <button
+            onClick={printIt}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-secondary px-3 py-2 text-xs font-semibold text-secondary-foreground transition hover:bg-secondary/80"
+          >
+            <Printer className="h-3.5 w-3.5" /> Print
+          </button>
+          <button
+            onClick={openFs}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90"
+          >
+            <Maximize2 className="h-3.5 w-3.5" /> Fullscreen
+          </button>
+        </div>
+      </div>
+      <div className="bg-secondary/30">
+        <iframe
+          src={`${url}#view=FitH`}
+          title={`${teacher.fullName} monthly syllabus`}
+          className="h-[80vh] w-full"
+        />
+      </div>
+    </section>
   );
 }
 
