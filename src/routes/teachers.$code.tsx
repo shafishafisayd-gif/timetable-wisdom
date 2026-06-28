@@ -349,7 +349,7 @@ function NowCard({
   return (
     <div
       className={`card-lift overflow-hidden p-5 ${isTeaching ? "" : bg} ${isTeaching ? "" : fg}`}
-      style={isTeaching ? { backgroundColor: teacher.color, color: "white" } : undefined}
+      style={isTeaching ? { backgroundColor: teacher.color, color: textOn(teacher.color) } : undefined}
     >
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-80">
         {icon} {title}
