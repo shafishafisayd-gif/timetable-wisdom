@@ -213,7 +213,7 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
 function NowCard({
   teacher, status, next, remaining, today,
 }: {
-  teacher: ReturnType<typeof TEACHER_BY_CODE[string]>;
+  teacher: Teacher;
   status: ReturnType<typeof getCurrentStatus>;
   next: ReturnType<typeof getNextPeriodForTeacher>;
   remaining: number;
