@@ -10,6 +10,7 @@ import {
   TEACHER_BY_CODE,
   jsDayToCode,
   formatTime12,
+  textOn,
   type DayCode,
 } from "@/data/timetable";
 
