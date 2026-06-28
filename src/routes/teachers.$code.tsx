@@ -116,7 +116,7 @@ function TeacherPage() {
         <h3 className="mt-4 text-sm font-semibold text-foreground">Classes Assigned</h3>
         <div className="mt-3 flex flex-wrap gap-1.5">
           {stats.classesAssigned.map((c) => (
-            <span key={c} className="rounded-full px-2.5 py-1 text-xs font-bold text-white" style={{ backgroundColor: teacher.color }}>{c}</span>
+            <span key={c} className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ backgroundColor: teacher.color, color: fg }}>{c}</span>
           ))}
         </div>
       </div>
