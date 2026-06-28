@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, Clock, BookOpen, Coffee } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Clock, BookOpen, Coffee, Maximize2, Download, Printer } from "lucide-react";
 import {
   TEACHER_BY_CODE,
   getTeacherSchedule,
@@ -14,6 +15,7 @@ import {
   jsDayToCode,
   workloadPercent,
   formatTime12,
+  textOn,
   type DayCode,
   type Teacher,
 } from "@/data/timetable";
