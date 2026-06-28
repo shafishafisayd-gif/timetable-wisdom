@@ -11,12 +11,11 @@ import {
   DAYS,
   DAY_LABELS,
   PERIOD_TIMES,
-  BREAKS,
   jsDayToCode,
   workloadPercent,
   formatTime12,
   type DayCode,
-  type PeriodNum,
+  type Teacher,
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
 
