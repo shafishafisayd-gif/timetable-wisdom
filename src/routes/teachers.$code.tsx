@@ -187,7 +187,7 @@ function TeacherPage() {
                     return (
                       <td key={p} className="align-top">
                         {slot ? (
-                          <div className="rounded-xl px-2 py-1.5 text-[11px] font-semibold text-white shadow-sm" style={{ backgroundColor: teacher.color }}>
+                          <div className="rounded-xl px-2 py-1.5 text-[11px] font-semibold shadow-sm" style={{ backgroundColor: teacher.color, color: fg }}>
                             <div className="font-bold">{slot.className}</div>
                             <div className="opacity-90">{slot.subject}</div>
                           </div>
