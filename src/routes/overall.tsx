@@ -101,8 +101,8 @@ function Overall() {
                         <Link
                           to="/teachers/$code"
                           params={{ code: slot.teacher }}
-                          className="block rounded-xl px-2 py-1.5 text-[11px] font-semibold text-white shadow-sm transition active:scale-95"
-                          style={{ backgroundColor: color }}
+                          className="block rounded-xl px-2 py-1.5 text-[11px] font-semibold shadow-sm transition active:scale-95"
+                          style={{ backgroundColor: color, color: textOn(color) }}
                         >
                           <div className="truncate font-bold">{slot.subject}</div>
                           <div className="opacity-90">{slot.teacher}</div>
