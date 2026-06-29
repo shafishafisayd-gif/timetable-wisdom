@@ -403,7 +403,7 @@ function NowCard({
       <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
         {next ? (
           <div className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-            Next: P{next.period.period} · {next.slot.className} · {next.slot.subject}
+            Next: {next.period.labelShort} · {next.slot.className} · {next.slot.subject}
           </div>
         ) : (
           <div className="rounded-full bg-white/15 px-3 py-1">No more classes today</div>
