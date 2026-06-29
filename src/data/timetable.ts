@@ -1,9 +1,5 @@
 // Single source of truth for Malja'a College timetable
-// Extracted directly from the official PDF (NEW TT 3.pdf).
-// IMPORTANT: There are TWO separate "Period 1" sessions in the PDF:
-//   - P1     5:50 AM – 6:35 AM  (early morning)
-//   - P1 (2) 7:00 AM – 7:40 AM  (after the get-fresh break)
-// They MUST stay independent — never merge them.
+// Extracted from the provided PDFs.
 
 export type DayCode = "SAT" | "SUN" | "MON" | "TUE" | "WED" | "THU";
 export const DAYS: DayCode[] = ["SAT", "SUN", "MON", "TUE", "WED", "THU"];
@@ -16,15 +12,13 @@ export const DAY_LABELS: Record<DayCode, string> = {
   THU: "Thursday",
 };
 
-// Period index 0 = early P1, 1 = P1 (2), 2..9 = P2..P9.
-export type PeriodNum = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-export const PERIODS: PeriodNum[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+export type PeriodNum = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export const PERIODS: PeriodNum[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export interface PeriodTime {
   period: PeriodNum;
-  label: string;       // long label e.g. "Period 1 (Early)"
-  labelShort: string;  // short label e.g. "P1", "P1 (2)", "P2"
-  start: string;       // HH:MM 24h
+  label: string;
+  start: string; // HH:MM 24h
   end: string;
   startMin: number;
   endMin: number;
@@ -36,19 +30,18 @@ const t = (s: string) => {
 };
 
 export const PERIOD_TIMES: PeriodTime[] = [
-  { period: 0, label: "Period 1 (Early)", labelShort: "P1",     start: "05:50", end: "06:35", startMin: t("05:50"), endMin: t("06:35") },
-  { period: 1, label: "Period 1 (2)",     labelShort: "P1 (2)", start: "07:00", end: "07:40", startMin: t("07:00"), endMin: t("07:40") },
-  { period: 2, label: "Period 2",         labelShort: "P2",     start: "07:40", end: "08:20", startMin: t("07:40"), endMin: t("08:20") },
-  { period: 3, label: "Period 3",         labelShort: "P3",     start: "08:20", end: "09:00", startMin: t("08:20"), endMin: t("09:00") },
-  { period: 4, label: "Period 4",         labelShort: "P4",     start: "09:40", end: "10:20", startMin: t("09:40"), endMin: t("10:20") },
-  { period: 5, label: "Period 5",         labelShort: "P5",     start: "10:20", end: "11:00", startMin: t("10:20"), endMin: t("11:00") },
-  { period: 6, label: "Period 6",         labelShort: "P6",     start: "11:15", end: "12:00", startMin: t("11:15"), endMin: t("12:00") },
-  { period: 7, label: "Period 7",         labelShort: "P7",     start: "12:00", end: "12:45", startMin: t("12:00"), endMin: t("12:45") },
-  { period: 8, label: "Period 8",         labelShort: "P8",     start: "14:15", end: "15:00", startMin: t("14:15"), endMin: t("15:00") },
-  { period: 9, label: "Period 9",         labelShort: "P9",     start: "15:00", end: "15:45", startMin: t("15:00"), endMin: t("15:45") },
+  { period: 1, label: "Period 1", start: "07:00", end: "07:40", startMin: t("07:00"), endMin: t("07:40") },
+  { period: 2, label: "Period 2", start: "07:40", end: "08:20", startMin: t("07:40"), endMin: t("08:20") },
+  { period: 3, label: "Period 3", start: "08:20", end: "09:00", startMin: t("08:20"), endMin: t("09:00") },
+  { period: 4, label: "Period 4", start: "09:40", end: "10:20", startMin: t("09:40"), endMin: t("10:20") },
+  { period: 5, label: "Period 5", start: "10:20", end: "11:00", startMin: t("10:20"), endMin: t("11:00") },
+  { period: 6, label: "Period 6", start: "11:15", end: "12:00", startMin: t("11:15"), endMin: t("12:00") },
+  { period: 7, label: "Period 7", start: "12:00", end: "12:45", startMin: t("12:00"), endMin: t("12:45") },
+  { period: 8, label: "Period 8", start: "14:15", end: "15:00", startMin: t("14:15"), endMin: t("15:00") },
+  { period: 9, label: "Period 9", start: "15:00", end: "15:45", startMin: t("15:00"), endMin: t("15:45") },
 ];
 
-export type BreakKind = "GET_FRESH" | "BREAKFAST" | "INTERVAL" | "PRAYER_LUNCH";
+export type BreakKind = "GET_FRESH" | "BREAKFAST" | "INTERVAL" | "PRAYER_LUNCH" | "AFTER";
 export interface BreakSlot {
   kind: BreakKind;
   label: string;
@@ -59,9 +52,8 @@ export interface BreakSlot {
 }
 
 export const BREAKS: BreakSlot[] = [
-  { kind: "GET_FRESH",    label: "Get Fresh",      start: "06:35", end: "07:00", startMin: t("06:35"), endMin: t("07:00") },
-  { kind: "BREAKFAST",    label: "Breakfast",      start: "09:00", end: "09:40", startMin: t("09:00"), endMin: t("09:40") },
-  { kind: "INTERVAL",     label: "Interval",       start: "11:00", end: "11:15", startMin: t("11:00"), endMin: t("11:15") },
+  { kind: "BREAKFAST", label: "Breakfast", start: "09:00", end: "09:40", startMin: t("09:00"), endMin: t("09:40") },
+  { kind: "INTERVAL", label: "Interval", start: "11:00", end: "11:15", startMin: t("11:00"), endMin: t("11:15") },
   { kind: "PRAYER_LUNCH", label: "Prayer & Lunch", start: "12:45", end: "14:15", startMin: t("12:45"), endMin: t("14:15") },
 ];
 
@@ -70,12 +62,13 @@ export interface Teacher {
   shortName: string;
   fullName: string;
   position: string;
-  color: string;       // EXACT colour from the official PDF legend
-  colorSoft: string;   // soft bg derived from color
-  syllabusPdf?: string;
+  color: string; // EXACT colour from the official PDF legend
+  colorSoft: string; // soft bg derived from color
+  syllabusPdf?: string; // url to monthly syllabus pdf page
 }
 
-// Colours read directly from the official timetable PDF legend (page 3).
+// Colours below are read directly from the official timetable PDF legend
+// (Page 3 of NEW TT 3.pdf). Do not redesign or replace them.
 export const TEACHERS: Teacher[] = [
   { code: "HU",  shortName: "HU",  fullName: "Hassan Hudawi",          position: "Usthad", color: "#547F35", colorSoft: "#E3EDD7", syllabusPdf: "/syllabus/HU.pdf"  },
   { code: "ZU",  shortName: "ZU",  fullName: "Muhammed Zaini",         position: "Usthad", color: "#FFFF00", colorSoft: "#FFFFCC", syllabusPdf: "/syllabus/ZU.pdf"  },
@@ -91,6 +84,7 @@ export const TEACHERS: Teacher[] = [
   { code: "SN",  shortName: "SN",  fullName: "Sinan Nadwi",            position: "Usthad", color: "#FFE699", colorSoft: "#FFF4D1" },
 ];
 
+// Pick readable text colour (black or white) for a given background hex.
 export function textOn(hex: string): "#000000" | "#FFFFFF" {
   const h = hex.replace("#", "");
   const r = parseInt(h.substring(0, 2), 16) / 255;
@@ -109,94 +103,144 @@ export const CLASSES = ["S1", "S2", "S3", "S4", "S5", "S6", "S7"] as const;
 export type ClassId = (typeof CLASSES)[number];
 
 export interface Slot {
-  teacher: string;
+  teacher: string; // teacher code
   className: ClassId;
   subject: string;
 }
 
+// schedule[day][period] = Slot[]  (multiple classes happen in parallel)
 export type DaySchedule = Record<PeriodNum, Slot[]>;
 export type FullSchedule = Record<DayCode, DaySchedule>;
 
 const emptyDay = (): DaySchedule => ({
-  0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [],
+  1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [],
 });
 
-// ---------- Source data: CLASS × DAY × 10 periods ----------
-// Each cell is [teacherCode, subject] or null. Order: P1, P1(2), P2, P3, P4, P5, P6, P7, P8, P9.
-type Cell = [string, string] | null;
-type DayRows = Record<ClassId, Cell[]>;
-
-const CLASS_DATA: Record<DayCode, DayRows> = {
-  SAT: {
-    S1: [null, null, ["AF","Nahvu (Avamil)"], ["NF","Aqeeda"], ["SF","Thareekh"], ["SW","Insha'"], ["HU","Fiqh"], ["AJR","Swarf"], ["AF","Adab"], null],
-    S2: [null, null, ["AJR","Thafseer"], ["AF","Thasavvuf"], ["NF","Insha'"], ["KF","Swarf"], ["AF","Fiqh"], ["SW","Adab"], ["SSH","Urdu"], null],
-    S3: [null, null, ["SSH","Thafseer"], ["HU","Fiqh"], ["AJR","Balaga"], ["NF","Insha'"], ["KF","Nahvu"], ["AF","Hadees"], ["HU","Urdu"], ["SH","Thareekh"]],
-    S4: [null, ["SSH","Insha'"], ["HU","Nahvu"], ["SW","Politics"], ["HW","English"], ["SH","Hadees"], ["AJR","Fiqh"], ["KF","Sociology"], ["SF","Arabic"], ["KF","Urdu"]],
-    S5: [null, ["AJR","Thafseer"], ["ZU","Nahvu"], ["HU","Fiqh"], ["SH","History"], ["HW","Hadees"], ["SW","Insha'"], ["SSH","Manthiq"], ["NF","English"], ["AF","Adab"]],
-    S6: [null, ["SW","Thafseer"], ["NF","Balaga"], ["ZU","Nahvu"], ["HU","Fiqh"], ["SF","Hadees"], ["SSH","IT"], ["SH","AEC"], ["ZU","Thasavvuf"], ["SN","Minor"]],
-    S7: [null, ["HU","Thafseer"], ["SW","Adab"], ["AJR","Manthiq"], ["KF","Translation"], ["ZU","Usoolul Fiqh"], ["SF","Hadees"], ["ZU","Fiqh"], ["SN","Minor politics"], ["SN","Minor politics"]],
-  },
-  SUN: {
-    S1: [["KF","Nahvu (Nahvul Valih)"], null, ["AJR","Swarf"], ["SSH","Urdu"], ["AF","Adab"], ["NF","Aqeeda"], ["SW","Insha'"], ["HW","Khath"], ["SW","Thilava"], null],
-    S2: [["AF","Thasavvuf"], null, ["SW","Thareekh"], ["AJR","Nahvu"], ["NF","Insha'"], ["SF","Thilava"], ["AJR","Nahvu"], ["SSH","Urdu"], ["AF","Fiqh"], null],
-    S3: [["SSH","Fiqh"], null, ["KF","Nahvu"], ["AF","Hadees"], ["SH","Thareekh"], ["AJR","Balaga"], ["KF","Nahvu"], ["HU","Urdu"], ["NF","Insha'"], null],
-    S4: [null, ["HU","Nahvu"], ["AF","Economics"], ["SW","Adab"], ["HW","English"], ["SH","History"], ["HU","Nahvu"], ["AJR","Fiqh"], ["ZU","Thasavvuf"], ["SSH","IT"]],
-    S5: [null, ["AJR","Thafseer"], ["ZU","Nahvu"], ["HU","Fiqh"], ["KF","Sociology"], ["AF","Economics"], ["SSH","IT"], ["SW","Politics"], ["SF","Arabic"], ["HW","Hadees"]],
-    S6: [null, ["SW","Thafseer"], ["NF","Balaga"], ["ZU","Nahvu"], ["HU","Fiqh"], ["SSH","Manthiq"], ["ZU","Thasavvuf"], ["SH","AEC"], ["KF","Urdu"], ["SN","Minor"]],
-    S7: [null, ["ZU","Usoolul Fiqh"], ["HU","Thafseer"], ["NF","Balaga"], ["SF","Hadees"], ["ZU","Fiqh"], ["SH","AEC"], ["KF","Translation"], ["HW","Thasavvuf"], ["SN","Minor"]],
-  },
-  MON: {
-    S1: [["AF","Nahvu (Avamil)"], null, ["KF","Nahvu (Nahvul Valih)"], ["SW","Insha'"], ["SF","Thareekh"], null, null, null, null, null],
-    S2: [["KF","Swarf"], null, ["AF","Fiqh"], ["AJR","Nahvu"], ["SW","Adab"], null, null, null, null, null],
-    S3: [["SSH","Fiqh"], null, ["NF","Insha'"], ["KF","Nahvu"], null, null, null, null, null, null],
-    S4: [null, ["NF","Balaga"], ["SSH","Insha'"], ["AF","Economics"], ["HW","English"], ["SH","History"], ["KF","Urdu"], ["ZU","Thasavvuf"], ["AJR","Fiqh"], ["SW","Politics"]],
-    S5: [null, ["AJR","Thafseer"], ["ZU","Nahvu"], ["NF","English"], ["SH","History"], ["HW","Hadees"], ["AF","Economics"], ["SW","Insha'"], ["AF","Adab"], ["SSH","IT"]],
-    S6: [null, ["SW","Thafseer"], ["AJR","Adab"], null, null, ["SF","Hadees"], ["HW","Insha'"], ["SSH","Manthiq"], ["ZU","Nahvu"], ["KF","MDC"]],
-    S7: [null, ["ZU","Usoolul Fiqh"], ["SW","Adab"], null, null, ["NF","Balaga"], ["SF","Hadees"], ["KF","Urdu"], ["SSH","Thakhassus"], ["AJR","Manthiq"]],
-  },
-  TUE: {
-    S1: [["KF","Nahvu (Nahvul Valih)"], ["SSH","Urdu"], ["AJR","Swarf"], ["SW","Thilava"], null, null, null, null, null, null],
-    S2: [["AF","Fiqh"], ["SW","Thareekh"], ["NF","Insha'"], null, null, null, null, null, null, null],
-    S3: [["SSH","Fiqh"], ["AF","Hadees"], ["KF","Nahvu"], null, null, null, null, null, null, null],
-    S4: [null, ["NF","Balaga"], ["KF","Sociology"], ["SW","Adab"], ["SH","History"], null, ["SSH","IT"], ["AJR","Fiqh"], ["ZU","Thasavvuf"], ["AF","Economics"]],
-    S5: [null, ["AJR","Thafseer"], ["ZU","Nahvu"], ["AF","Economics"], ["KF","Urdu"], ["HU","Fiqh"], null, ["KF","Sociology"], ["NF","English"], ["SW","Politics"]],
-    S6: [null, ["SW","Thafseer"], ["NF","Balaga"], null, null, ["SF","Hadees"], null, ["HU","Fiqh"], ["SSH","IT"], ["NF","Translation"]],
-    S7: [null, ["ZU","Usoolul Fiqh"], ["AJR","Manthiq"], null, null, null, null, ["SSH","IT"], ["SF","MDC"], ["HU","Thafseer"]],
-  },
-  WED: {
-    S1: [["AF","Adab"], ["KF","Nahvu (Nahvul Valih)"], ["SW","Insha'"], ["HU","Fiqh"], null, null, null, null, null, null],
-    S2: [["KF","Swarf"], ["AF","Thasavvuf"], ["AJR","Nahvu"], ["NF","Insha'"], null, null, null, null, null, null],
-    S3: [["SSH","Fiqh"], ["AJR","Balaga"], ["KF","Nahvu"], null, null, null, null, null, null, null],
-    S4: [null, ["HU","Nahvu"], ["NF","Balaga"], ["AF","Economics"], ["HW","English"], ["SH","Hadees"], ["KF","Sociology"], ["AJR","Fiqh"], ["ZU","Thasavvuf"], ["SW","Politics"]],
-    S5: [null, ["AJR","Thafseer"], ["ZU","Nahvu"], ["HU","Fiqh"], ["SH","History"], ["HW","Hadees"], ["SSH","Manthiq"], ["NF","English"], ["AF","Economics"], ["KF","Urdu"]],
-    S6: [null, ["SW","Thafseer"], ["HU","Fiqh"], null, null, ["SF","Hadees"], ["ZU","Nahvu"], ["SSH","Manthiq"], ["NF","Translation"], ["AJR","Adab"]],
-    S7: [null, ["ZU","Usoolul Fiqh"], ["SSH","IT"], null, null, null, ["SF","Hadees"], ["SW","Adab"], ["HW","Thasavvuf"], ["HU","Thafseer"]],
-  },
-  THU: {
-    S1: [["HU","Fiqh"], ["AJR","Swarf"], ["AF","Nahvu (Avamil)"], ["KF","Tharbiya"], null, null, null, null, null, null],
-    S2: [["AF","Fiqh"], ["KF","Swarf"], ["AJR","Nahvu"], ["SW","Adab"], null, null, null, null, null, null],
-    S3: [["KF","Nahvu"], ["AF","Hadees"], ["SSH","Fiqh"], ["SH","Thareekh"], null, null, null, null, null, null],
-    S4: [null, ["HU","Nahvu"], ["NF","Balaga"], ["SW","Adab"], ["HW","English"], ["SH","History"], ["SSH","Insha'"], ["AF","Economics"], ["AJR","Fiqh"], ["HU","Nahvu"]],
-    S5: [null, ["AJR","Thafseer"], ["ZU","Nahvu"], ["NF","English"], ["AF","Economics"], ["SSH","Manthiq"], ["SW","Politics"], ["KF","Sociology"], ["HU","Fiqh"], ["HW","Hadees"]],
-    S6: [null, ["SW","Thafseer"], ["HU","Fiqh"], null, ["ZU","Thasavvuf"], ["SF","Hadees"], ["ZU","Nahvu"], ["SSH","Manthiq"], ["HW","Insha'"], ["SN","Minor"]],
-    S7: [null, ["ZU","Usoolul Fiqh"], ["SSH","Thakhassus"], null, ["NF","Balaga"], ["ZU","Fiqh"], ["HW","Thasavvuf"], ["HU","Thafseer"], ["SF","Life"], ["AJR","Manthiq"]],
-  },
-};
-
 const SCHEDULE: FullSchedule = {
-  SAT: emptyDay(), SUN: emptyDay(), MON: emptyDay(),
-  TUE: emptyDay(), WED: emptyDay(), THU: emptyDay(),
+  SAT: emptyDay(),
+  SUN: emptyDay(),
+  MON: emptyDay(),
+  TUE: emptyDay(),
+  WED: emptyDay(),
+  THU: emptyDay(),
 };
 
-for (const day of DAYS) {
-  for (const cls of CLASSES) {
-    const row = CLASS_DATA[day][cls];
-    row.forEach((cell, idx) => {
-      if (!cell) return;
-      const p = idx as PeriodNum;
-      const [teacher, subject] = cell;
-      SCHEDULE[day][p].push({ teacher, className: cls, subject });
-    });
+// Raw teacher-wise data. Each row: [day, p1..p9] where each cell is "ClassId - Subject" or null.
+type Row = [DayCode, ...(string | null)[]];
+
+const RAW: Record<string, Row[]> = {
+  HU: [
+    ["SAT", "S7 - Thafseer", "S4 - Nahvu",     "S5 - Fiqh",      "S6 - Fiqh",      null,           "S1 - Fiqh",      null,           "S3 - Urdu",      null],
+    ["SUN", "S4 - Nahvu",    "S7 - Thafseer",  "S5 - Fiqh",      "S6 - Fiqh",      null,           "S4 - Nahvu",     "S3 - Urdu",     null,             null],
+    ["MON", null, null, null, null, null, null, null, null, null],
+    ["TUE", null, null, null, "S4 - Nahvu",     "S5 - Fiqh",      "S7 - Thafseer",  "S6 - Fiqh",      null,           "S7 - Thafseer"],
+    ["WED", "S4 - Nahvu",    "S6 - Fiqh",      "S5 - Fiqh",      "S1 - Fiqh",      null, null, null, null,           "S7 - Thafseer"],
+    ["THU", "S1 - Fiqh",     "S4 - Nahvu",     "S6 - Fiqh",      null, null, null, "S7 - Thafseer",  "S5 - Fiqh",     "S4 - Nahvu"],
+  ],
+  ZU: [
+    ["SAT", null,             "S5 - Nahvu",    "S6 - Nahvu",     null,             "S7 - Usoolul Fiqh", null,        "S7 - Fiqh",     "S6 - Thasavvuf", null],
+    ["SUN", "S7 - Usoolul Fiqh","S5 - Nahvu",  "S6 - Nahvu",     null,             "S7 - Fiqh",        "S6 - Thasavvuf", null,        "S4 - Thasavvuf", null],
+    ["MON", "S7 - Usoolul Fiqh","S5 - Nahvu",  null,             null, null, null, "S4 - Thasavvuf",   "S6 - Nahvu", null],
+    ["TUE", "S7 - Usoolul Fiqh","S5 - Nahvu",  null, null,        "S7 - Fiqh",      "S6 - Nahvu",     null,           "S4 - Thasavvuf", null],
+    ["WED", "S7 - Usoolul Fiqh","S5 - Nahvu",  null, null,        "S7 - Fiqh",      "S6 - Nahvu",     null,           "S4 - Thasavvuf", null],
+    ["THU", "S7 - Usoolul Fiqh","S5 - Nahvu",  null, "S6 - Thasavvuf", "S7 - Fiqh", "S6 - Nahvu",     null, null, null],
+  ],
+  HW: [
+    ["SAT", null, null, null, "S4 - English", "S5 - Hadees", null, null, null, null],
+    ["SUN", null, null, null, "S4 - English", null, null, "S1 - Khath", "S7 - Thasavvuf", "S5 - Hadees"],
+    ["MON", null, null, null, "S4 - English", "S5 - Hadees", "S6 - Insha'", null, null, null],
+    ["TUE", null, null, null, null, null, null, null, null, null],
+    ["WED", null, null, null, "S4 - English", "S5 - Hadees", null, null, "S7 - Thasavvuf", null],
+    ["THU", null, null, null, "S4 - English", null, "S7 - Thasavvuf", null, "S6 - Insha'", "S5 - Hadees"],
+  ],
+  SF: [
+    ["SAT", null, null, null, "S1 - Thareekh", "S6 - Hadees", "S7 - Hadees", null, "S4 - Arabic", null],
+    ["SUN", null, null, null, "S7 - Hadees",   "S2 - Thilava",null,           null, "S5 - Arabic", null],
+    ["MON", null, null, null, "S1 - Thareekh", "S6 - Hadees", "S7 - Hadees", null, null, null],
+    ["TUE", null, null, null, null,            "S6 - Hadees", null, null, "S7 - MDC", null],
+    ["WED", null, null, null, null,            "S6 - Hadees", "S7 - Hadees", null, null, null],
+    ["THU", null, null, null, null,            "S6 - Hadees", null, null, "S7 - Life", null],
+  ],
+  SW: [
+    ["SAT", "S6 - Thafseer", "S7 - Adab",     "S4 - Politics",  null,           "S1 - Insha'",    "S5 - Insha'",   "S2 - Adab",     null, null],
+    ["SUN", "S6 - Thafseer", "S2 - Thareekh", "S4 - Adab",      null, null,     "S1 - Insha'",    "S5 - Politics", "S1 - Thilava", null],
+    ["MON", "S6 - Thafseer", "S7 - Adab",     "S1 - Insha'",    "S2 - Adab",    null, null,       "S5 - Insha'",   null,           "S4 - Politics"],
+    ["TUE", "S6 - Thafseer", "S2 - Thareekh", "S4 - Adab",      "S1 - Thilava", null, null, null, null,           "S5 - Politics"],
+    ["WED", "S6 - Thafseer", null,             "S1 - Insha'",   null, null, null, "S7 - Adab",    null,           "S4 - Politics"],
+    ["THU", "S6 - Thafseer", null,             "S4 - Adab",     "S2 - Adab",    null, "S5 - Politics", null, null, null],
+  ],
+  SH: [
+    ["SAT", null, null, null, "S5 - History",  "S4 - Hadees",   null, "S6 - AEC",     null, "S3 - Thareekh"],
+    ["SUN", null, null, null, "S3 - Thareekh", "S4 - History",  "S7 - AEC", "S6 - AEC", null, null],
+    ["MON", null, null, null, "S5 - History",  "S4 - Hadees",   null, null, null, null],
+    ["TUE", null, null, null, "S3 - Thareekh", "S4 - History",  null, null, null, null],
+    ["WED", null, null, null, "S5 - History",  "S4 - Hadees",   null, null, null, null],
+    ["THU", null, null, null, "S3 - Thareekh", "S4 - History",  null, null, null, null],
+  ],
+  SSH: [
+    ["SAT", "S4 - Insha'",   "S3 - Fiqh",    null, null, null,        "S6 - IT",       "S5 - Manthiq", "S2 - Urdu", null],
+    ["SUN", "S3 - Fiqh",     null,           "S1 - Urdu", null,       "S6 - Manthiq",  "S5 - IT",      "S2 - Urdu", null, "S4 - IT"],
+    ["MON", "S3 - Fiqh",     "S4 - Insha'", null, null, null, null,   "S6 - Manthiq",  "S7 - Thakhassus", "S5 - IT"],
+    ["TUE", "S3 - Fiqh",     "S1 - Urdu",   null, null, null,         "S4 - IT",       "S7 - IT",      "S6 - IT", null],
+    ["WED", "S3 - Fiqh",     "S7 - IT",     null, null, null,         "S5 - Manthiq",  "S6 - Manthiq", null, null],
+    ["THU", null,             "S7 - Thakhassus", "S3 - Fiqh", null,   "S5 - Manthiq",  "S4 - Insha'",  "S6 - Manthiq", null, null],
+  ],
+  AJR: [
+    ["SAT", "S5 - Thafseer", "S2 - Nahvu",  "S7 - Manthiq", "S3 - Balaga", null,            "S4 - Fiqh", "S1 - Swarf", null, null],
+    ["SUN", "S5 - Thafseer", "S1 - Swarf",  "S2 - Nahvu",   null,           "S3 - Balaga",  "S2 - Nahvu", "S4 - Fiqh", null, null],
+    ["MON", "S5 - Thafseer", "S6 - Adab",   "S2 - Nahvu",   null, null, null, null,         "S4 - Fiqh", "S7 - Manthiq"],
+    ["TUE", "S5 - Thafseer", "S7 - Manthiq","S1 - Swarf",   "S2 - Nahvu",   null, null,     "S4 - Fiqh", null, null],
+    ["WED", "S5 - Thafseer", "S3 - Balaga", "S2 - Nahvu",   null, null, null, "S4 - Fiqh",  null, "S6 - Adab"],
+    ["THU", "S5 - Thafseer", "S1 - Swarf",  "S2 - Nahvu",   null, null, null, null,         "S4 - Fiqh", "S7 - Manthiq"],
+  ],
+  KF: [
+    ["SAT", null, null,                       "S3 - Nahvu",     "S7 - Translation","S2 - Swarf","S3 - Nahvu",    "S4 - Sociology", null, "S4 - Urdu"],
+    ["SUN", "S1 - Nahvu (Nahvul Valih)", "S3 - Nahvu", null,    "S5 - Sociology",  null,        "S3 - Nahvu",    "S7 - Translation","S6 - Urdu", null],
+    ["MON", "S2 - Swarf", "S1 - Nahvu (Nahvul Valih)", "S3 - Nahvu", null, null,   "S4 - Urdu", "S7 - Urdu",     null, "S6 - MDC"],
+    ["TUE", "S1 - Nahvu (Nahvul Valih)", "S4 - Sociology", "S3 - Nahvu", "S5 - Urdu", null, null,"S5 - Sociology", null, null],
+    ["WED", "S2 - Swarf", "S1 - Nahvu (Nahvul Valih)", "S3 - Nahvu", null, null,   "S4 - Sociology", null, null, "S5 - Urdu"],
+    ["THU", "S3 - Nahvu", "S2 - Swarf", null, "S1 - Tharbiya", null, null,        "S5 - Sociology", null, null],
+  ],
+  AF: [
+    ["SAT", null, "S1 - Nahvu (Avamil)", "S2 - Thasavvuf", null, null,        "S2 - Fiqh",  "S3 - Hadees", "S1 - Adab",     "S5 - Adab"],
+    ["SUN", "S2 - Thasavvuf", "S4 - Economics","S3 - Hadees", "S1 - Adab",    "S5 - Economics", null, null,"S2 - Fiqh", null],
+    ["MON", "S1 - Nahvu (Avamil)", "S2 - Fiqh", "S4 - Economics", null, null, "S5 - Economics", null, "S5 - Adab", null],
+    ["TUE", "S2 - Fiqh",  "S3 - Hadees", "S5 - Economics", null, null,       "S5 - Adab",  null, null, "S4 - Economics"],
+    ["WED", "S1 - Adab",  "S2 - Thasavvuf","S4 - Economics", null, null, null, null,       "S5 - Economics", null],
+    ["THU", "S2 - Fiqh",  "S3 - Hadees", "S1 - Nahvu (Avamil)", "S5 - Economics", null, null,"S4 - Economics", null, null],
+  ],
+  NF: [
+    ["SAT", null, "S6 - Balaga", "S1 - Aqeeda", "S2 - Insha'", "S3 - Insha'", null, null, "S5 - English", null],
+    ["SUN", null, "S6 - Balaga", "S7 - Balaga", "S2 - Insha'", "S1 - Aqeeda", null, null, "S3 - Insha'", null],
+    ["MON", "S4 - Balaga", "S3 - Insha'", "S5 - English", null, "S7 - Balaga", null, null, null, null],
+    ["TUE", "S4 - Balaga", "S6 - Balaga", "S2 - Insha'", null, null, null, null, "S5 - English", "S6 - Translation"],
+    ["WED", null, "S4 - Balaga", null, "S2 - Insha'", null, null, "S5 - English", "S6 - Translation", null],
+    ["THU", null, "S4 - Balaga", "S5 - English", "S7 - Balaga", null, null, null, null, null],
+  ],
+  SN: [
+    // Derived from overall TT (Minor / Minor politics)
+    ["SAT", null, null, null, null, null, null, null, "S6 - Minor", null],
+    ["SAT", null, null, null, null, null, null, null, "S7 - Minor politics", "S7 - Minor politics"],
+    ["SUN", null, null, null, null, null, null, null, "S6 - Minor", null],
+    ["SUN", null, null, null, null, null, null, null, null, "S7 - Minor"],
+    ["THU", null, null, null, null, null, null, null, null, "S6 - Minor"],
+  ],
+};
+
+// Populate SCHEDULE
+for (const [code, rows] of Object.entries(RAW)) {
+  for (const row of rows) {
+    const day = row[0] as DayCode;
+    for (let i = 1; i <= 9; i++) {
+      const cell = row[i];
+      if (!cell) continue;
+      const m = (cell as string).match(/^(S[1-7])\s*-\s*(.+)$/);
+      if (!m) continue;
+      const className = m[1] as ClassId;
+      const subject = m[2].trim();
+      const p = i as PeriodNum;
+      SCHEDULE[day][p].push({ teacher: code, className, subject });
+    }
   }
 }
 
@@ -207,9 +251,10 @@ export { SCHEDULE };
 export function getTeacherSchedule(code: string): Record<DayCode, Record<PeriodNum, Slot | null>> {
   const out = {} as Record<DayCode, Record<PeriodNum, Slot | null>>;
   for (const d of DAYS) {
-    out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
+    out[d] = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      out[d][p] = SCHEDULE[d][p].find((s) => s.teacher === code) || null;
+      const slot = SCHEDULE[d][p].find((s) => s.teacher === code) || null;
+      out[d][p] = slot;
     }
   }
   return out;
@@ -218,9 +263,10 @@ export function getTeacherSchedule(code: string): Record<DayCode, Record<PeriodN
 export function getClassSchedule(cls: ClassId): Record<DayCode, Record<PeriodNum, Slot | null>> {
   const out = {} as Record<DayCode, Record<PeriodNum, Slot | null>>;
   for (const d of DAYS) {
-    out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
+    out[d] = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      out[d][p] = SCHEDULE[d][p].find((s) => s.className === cls) || null;
+      const slot = SCHEDULE[d][p].find((s) => s.className === cls) || null;
+      out[d][p] = slot;
     }
   }
   return out;
@@ -232,7 +278,7 @@ export interface TeacherStats {
   classesAssigned: ClassId[];
   subjects: string[];
   periodsByDay: Record<DayCode, number>;
-  workloadPercent: number;
+  workloadPercent: number; // vs max teacher
 }
 
 export function getTeacherStats(code: string): TeacherStats {
@@ -245,7 +291,12 @@ export function getTeacherStats(code: string): TeacherStats {
     let n = 0;
     for (const p of PERIODS) {
       const s = sched[d][p];
-      if (s) { n++; total++; classes.add(s.className); subjects.add(s.subject); }
+      if (s) {
+        n++;
+        total++;
+        classes.add(s.className);
+        subjects.add(s.subject);
+      }
     }
     byDay[d] = n;
   }
@@ -266,6 +317,7 @@ export function workloadPercent(code: string) {
   return Math.round((TEACHER_LOADS[code] / MAX_LOAD) * 100);
 }
 
+// Current day mapping (JS getDay: 0=Sun..6=Sat). College runs Sat-Thu (off: Fri).
 export function jsDayToCode(d: number): DayCode | null {
   switch (d) {
     case 6: return "SAT";
@@ -338,9 +390,4 @@ export function formatTime12(hhmm: string): string {
   if (h === 0) h = 12;
   else if (h > 12) h -= 12;
   return `${h}:${m} ${am ? "AM" : "PM"}`;
-}
-
-// Short label for a period index (0 → "P1", 1 → "P1 (2)", etc.)
-export function periodLabel(p: PeriodNum): string {
-  return PERIOD_TIMES.find((pt) => pt.period === p)?.labelShort ?? `P${p}`;
 }

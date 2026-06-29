@@ -9,10 +9,8 @@ import {
   SCHEDULE,
   DAYS,
   PERIODS,
-  PERIOD_TIMES,
   TEACHER_LOADS,
   textOn,
-  periodLabel,
   type DayCode,
   type ClassId,
   type Teacher,
@@ -44,7 +42,7 @@ function buildAssignments(code: string): AssignmentRow[] {
       const key = `${s.className}|${s.subject}`;
       const row = map.get(key) ?? { className: s.className, subject: s.subject, weekly: 0, periods: [] };
       row.weekly += 1;
-      row.periods.push(`${DAY_SHORT[d]} ${periodLabel(p)}`);
+      row.periods.push(`${DAY_SHORT[d]} P${p}`);
       map.set(key, row);
     }
   }
