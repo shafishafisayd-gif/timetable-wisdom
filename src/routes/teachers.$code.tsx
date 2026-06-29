@@ -183,8 +183,8 @@ function TeacherPage() {
             <thead>
               <tr>
                 <th className="sticky left-0 z-10 rounded-xl bg-secondary px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Day</th>
-                {PERIODS.map((p) => (
-                  <th key={p} className="rounded-xl bg-secondary px-2 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">P{p}</th>
+                {PERIOD_TIMES.map((pt) => (
+                  <th key={pt.period} className="rounded-xl bg-secondary px-2 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{pt.labelShort}</th>
                 ))}
               </tr>
             </thead>
