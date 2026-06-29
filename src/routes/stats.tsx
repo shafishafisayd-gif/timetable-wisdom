@@ -8,7 +8,6 @@ import {
   CLASSES,
   SCHEDULE,
   DAYS,
-  DAY_LABELS,
   PERIODS,
   TEACHER_LOADS,
   textOn,
