@@ -374,7 +374,7 @@ function NowCard({
     );
   } else if (status.kind === "free") {
     title = "Free Period";
-    body = <div className="mt-1 text-sm opacity-80">P{status.period.period} · {formatTime12(status.period.start)}–{formatTime12(status.period.end)}</div>;
+    body = <div className="mt-1 text-sm opacity-80">{status.period.labelShort} · {formatTime12(status.period.start)}–{formatTime12(status.period.end)}</div>;
   } else if (status.kind === "break") {
     title = status.breakSlot.label + " Break";
     icon = <Coffee className="h-5 w-5" />;
