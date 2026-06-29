@@ -369,7 +369,7 @@ function NowCard({
     body = (
       <div className="mt-1.5">
         <div className="text-2xl font-bold leading-tight">{status.slot.subject}</div>
-        <div className="text-sm opacity-90">Class {status.slot.className} · P{status.period.period} · {formatTime12(status.period.start)}–{formatTime12(status.period.end)}</div>
+        <div className="text-sm opacity-90">Class {status.slot.className} · {status.period.labelShort} · {formatTime12(status.period.start)}–{formatTime12(status.period.end)}</div>
       </div>
     );
   } else if (status.kind === "free") {
