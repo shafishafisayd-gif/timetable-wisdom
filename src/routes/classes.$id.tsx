@@ -9,7 +9,6 @@ import {
   PERIOD_TIMES,
   TEACHER_BY_CODE,
   formatTime12,
-  periodLabel,
   textOn,
   type ClassId,
 } from "@/data/timetable";
