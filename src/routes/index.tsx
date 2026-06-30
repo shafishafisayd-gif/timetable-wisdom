@@ -5,7 +5,7 @@ import {
   DAYS,
   DAY_LABELS,
   PERIOD_TIMES,
-  PERIODS,
+  
   BREAKS,
   SCHEDULE,
   CLASSES,
