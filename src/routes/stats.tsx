@@ -42,7 +42,7 @@ function buildAssignments(code: string): AssignmentRow[] {
       const key = `${s.className}|${s.subject}`;
       const row = map.get(key) ?? { className: s.className, subject: s.subject, weekly: 0, periods: [] };
       row.weekly += 1;
-      row.periods.push(`${DAY_SHORT[d]} P${p}`);
+      row.periods.push(`${DAY_SHORT[d]} ${p === 0 ? "P1" : p === 1 ? "P1-(2)" : `P${p}`}`);
       map.set(key, row);
     }
   }
