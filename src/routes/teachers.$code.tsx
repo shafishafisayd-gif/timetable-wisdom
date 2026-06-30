@@ -15,6 +15,7 @@ import {
   jsDayToCode,
   workloadPercent,
   formatTime12,
+  periodLabel,
   textOn,
   type DayCode,
   type Teacher,
