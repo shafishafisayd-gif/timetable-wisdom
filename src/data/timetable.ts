@@ -12,13 +12,23 @@ export const DAY_LABELS: Record<DayCode, string> = {
   THU: "Thursday",
 };
 
-export type PeriodNum = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
-export const PERIODS: PeriodNum[] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+export type PeriodNum = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+export const PERIODS: PeriodNum[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+// Short label used everywhere in the UI. Period 0 is the early-morning P1
+// (5:50 – 6:35) and period 1 is P1-(2) (7:00 – 7:40). They are TWO independent
+// teaching periods and must NEVER be merged.
+export function periodLabel(p: PeriodNum): string {
+  if (p === 0) return "P1";
+  if (p === 1) return "P1-(2)";
+  return `P${p}`;
+}
 
 export interface PeriodTime {
   period: PeriodNum;
-  label: string;
-  start: string; // HH:MM 24h
+  label: string;       // short label (e.g. "P1", "P1-(2)", "P2")
+  longLabel: string;   // long label (e.g. "Period 1", "Period 1-(2)")
+  start: string;       // HH:MM 24h
   end: string;
   startMin: number;
   endMin: number;
@@ -30,15 +40,16 @@ const t = (s: string) => {
 };
 
 export const PERIOD_TIMES: PeriodTime[] = [
-  { period: 1, label: "Period 1", start: "07:00", end: "07:40", startMin: t("07:00"), endMin: t("07:40") },
-  { period: 2, label: "Period 2", start: "07:40", end: "08:20", startMin: t("07:40"), endMin: t("08:20") },
-  { period: 3, label: "Period 3", start: "08:20", end: "09:00", startMin: t("08:20"), endMin: t("09:00") },
-  { period: 4, label: "Period 4", start: "09:40", end: "10:20", startMin: t("09:40"), endMin: t("10:20") },
-  { period: 5, label: "Period 5", start: "10:20", end: "11:00", startMin: t("10:20"), endMin: t("11:00") },
-  { period: 6, label: "Period 6", start: "11:15", end: "12:00", startMin: t("11:15"), endMin: t("12:00") },
-  { period: 7, label: "Period 7", start: "12:00", end: "12:45", startMin: t("12:00"), endMin: t("12:45") },
-  { period: 8, label: "Period 8", start: "14:15", end: "15:00", startMin: t("14:15"), endMin: t("15:00") },
-  { period: 9, label: "Period 9", start: "15:00", end: "15:45", startMin: t("15:00"), endMin: t("15:45") },
+  { period: 0, label: "P1",     longLabel: "Period 1",     start: "05:50", end: "06:35", startMin: t("05:50"), endMin: t("06:35") },
+  { period: 1, label: "P1-(2)", longLabel: "Period 1-(2)", start: "07:00", end: "07:40", startMin: t("07:00"), endMin: t("07:40") },
+  { period: 2, label: "P2",     longLabel: "Period 2",     start: "07:40", end: "08:20", startMin: t("07:40"), endMin: t("08:20") },
+  { period: 3, label: "P3",     longLabel: "Period 3",     start: "08:20", end: "09:00", startMin: t("08:20"), endMin: t("09:00") },
+  { period: 4, label: "P4",     longLabel: "Period 4",     start: "09:40", end: "10:20", startMin: t("09:40"), endMin: t("10:20") },
+  { period: 5, label: "P5",     longLabel: "Period 5",     start: "10:20", end: "11:00", startMin: t("10:20"), endMin: t("11:00") },
+  { period: 6, label: "P6",     longLabel: "Period 6",     start: "11:15", end: "12:00", startMin: t("11:15"), endMin: t("12:00") },
+  { period: 7, label: "P7",     longLabel: "Period 7",     start: "12:00", end: "12:45", startMin: t("12:00"), endMin: t("12:45") },
+  { period: 8, label: "P8",     longLabel: "Period 8",     start: "14:15", end: "15:00", startMin: t("14:15"), endMin: t("15:00") },
+  { period: 9, label: "P9",     longLabel: "Period 9",     start: "15:00", end: "15:45", startMin: t("15:00"), endMin: t("15:45") },
 ];
 
 export type BreakKind = "GET_FRESH" | "BREAKFAST" | "INTERVAL" | "PRAYER_LUNCH" | "AFTER";
