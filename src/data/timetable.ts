@@ -124,7 +124,7 @@ export type DaySchedule = Record<PeriodNum, Slot[]>;
 export type FullSchedule = Record<DayCode, DaySchedule>;
 
 const emptyDay = (): DaySchedule => ({
-  1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [],
+  0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [],
 });
 
 const SCHEDULE: FullSchedule = {
@@ -262,7 +262,7 @@ export { SCHEDULE };
 export function getTeacherSchedule(code: string): Record<DayCode, Record<PeriodNum, Slot | null>> {
   const out = {} as Record<DayCode, Record<PeriodNum, Slot | null>>;
   for (const d of DAYS) {
-    out[d] = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
+    out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
       const slot = SCHEDULE[d][p].find((s) => s.teacher === code) || null;
       out[d][p] = slot;
@@ -274,7 +274,7 @@ export function getTeacherSchedule(code: string): Record<DayCode, Record<PeriodN
 export function getClassSchedule(cls: ClassId): Record<DayCode, Record<PeriodNum, Slot | null>> {
   const out = {} as Record<DayCode, Record<PeriodNum, Slot | null>>;
   for (const d of DAYS) {
-    out[d] = { 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
+    out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
       const slot = SCHEDULE[d][p].find((s) => s.className === cls) || null;
       out[d][p] = slot;
