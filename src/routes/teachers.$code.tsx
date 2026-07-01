@@ -9,6 +9,7 @@ import {
   getRemainingPeriodsToday,
   getNextPeriodForTeacher,
   PERIODS,
+  PERIOD_LABELS,
   DAYS,
   DAY_LABELS,
   PERIOD_TIMES,
