@@ -52,9 +52,9 @@ function ClassDetail() {
         </div>
       </div>
 
-      <div className="card-soft p-3">
-        <div className="-mx-3 overflow-x-auto px-3">
-          <table className="w-full min-w-[680px] border-separate border-spacing-1.5">
+      <div className="card-soft p-2 sm:p-3">
+        <div className="overflow-x-auto overscroll-x-contain rounded-xl" style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}>
+          <table className="w-full min-w-max border-separate border-spacing-1">
             <thead>
               <tr>
                 <th className="sticky left-0 top-0 z-20 rounded-lg bg-secondary px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-muted-foreground shadow-sm">Day</th>
