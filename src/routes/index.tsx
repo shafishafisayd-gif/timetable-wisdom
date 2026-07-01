@@ -1,17 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Coffee } from "lucide-react";
 import {
   DAYS,
   DAY_LABELS,
-  PERIOD_TIMES,
-  PERIODS,
+  TIMETABLE_COLUMNS,
   SCHEDULE,
   CLASSES,
   TEACHER_BY_CODE,
   jsDayToCode,
   formatTime12,
   textOn,
+  PERIOD_LABELS,
   type DayCode,
 } from "@/data/timetable";
 
@@ -36,7 +36,7 @@ function Overall() {
     <div className="space-y-4">
       <div className="card-soft p-4">
         <h1 className="text-xl font-bold text-foreground">Overall Timetable</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">Tap a period to see details. Use the day buttons to switch.</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">Tap a period to see teacher details. Swipe the table sideways to see more.</p>
 
         <div className="mt-3 flex items-center gap-2">
           <button
@@ -71,45 +71,82 @@ function Overall() {
         </div>
       </div>
 
-      <div className="card-soft p-3">
-        <div className="-mx-3 overflow-x-auto px-3">
-          <table className="w-full min-w-[760px] border-separate border-spacing-1.5">
-            <thead className="sticky top-0 bg-card">
+      <div className="card-soft p-2 sm:p-3">
+        {/* touch-pan-x + overscroll-contain isolates horizontal scroll from the page */}
+        <div
+          className="overflow-x-auto overscroll-x-contain rounded-xl"
+          style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+        >
+          <table className="w-full min-w-max border-separate border-spacing-1">
+            <thead>
               <tr>
-                <th className="sticky left-0 z-10 rounded-xl bg-secondary px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Class</th>
-                {PERIOD_TIMES.map((pt) => (
-                  <th key={pt.period} className="rounded-xl bg-secondary px-2 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
-                    <div>P{pt.period}</div>
-                    <div className="font-normal text-[9px]">{formatTime12(pt.start)}</div>
-                  </th>
-                ))}
+                <th className="sticky left-0 top-0 z-20 rounded-lg bg-secondary px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-muted-foreground shadow-sm">
+                  Class
+                </th>
+                {TIMETABLE_COLUMNS.map((col, i) =>
+                  col.type === "period" ? (
+                    <th
+                      key={`h-p-${i}`}
+                      className="sticky top-0 z-10 rounded-lg bg-secondary px-2 py-2 text-center text-[10px] font-bold uppercase tracking-wide text-muted-foreground shadow-sm"
+                    >
+                      <div className="whitespace-nowrap">{PERIOD_LABELS[col.period.period]}</div>
+                      <div className="whitespace-nowrap font-normal text-[9px] text-muted-foreground/80">
+                        {formatTime12(col.period.start)}
+                      </div>
+                    </th>
+                  ) : (
+                    <th
+                      key={`h-b-${i}`}
+                      className="sticky top-0 z-10 rounded-lg bg-primary/10 px-1.5 py-2 text-center text-[9px] font-semibold uppercase tracking-wide text-primary/80 shadow-sm"
+                    >
+                      <Coffee className="mx-auto h-3 w-3" />
+                      <div className="mt-0.5 whitespace-nowrap">{col.brk.label}</div>
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody>
               {CLASSES.map((cls) => (
                 <tr key={cls}>
-                  <td className="sticky left-0 z-10 rounded-xl bg-primary px-2 py-2 text-center text-xs font-bold text-primary-foreground">{cls}</td>
-                  {PERIODS.map((p) => {
+                  <td className="sticky left-0 z-10 rounded-lg bg-primary px-2 py-2 text-center text-xs font-bold text-primary-foreground shadow-sm">
+                    {cls}
+                  </td>
+                  {TIMETABLE_COLUMNS.map((col, i) => {
+                    if (col.type === "break") {
+                      return (
+                        <td key={`c-b-${cls}-${i}`} className="align-middle">
+                          <div className="grid h-full min-h-[44px] w-6 place-items-center rounded-lg bg-primary/5">
+                            <div className="rotate-180 whitespace-nowrap text-[8px] font-semibold uppercase tracking-wider text-primary/60" style={{ writingMode: "vertical-rl" }}>
+                              Break
+                            </div>
+                          </div>
+                        </td>
+                      );
+                    }
+                    const p = col.period.period;
                     const slot = SCHEDULE[day][p].find((s) => s.className === cls);
                     if (!slot) {
                       return (
-                        <td key={p} className="align-top">
-                          <div className="rounded-xl bg-secondary/40 px-2 py-2 text-center text-[10px] font-medium text-muted-foreground">FREE</div>
+                        <td key={`c-p-${cls}-${i}`} className="align-top">
+                          <div className="min-w-[92px] rounded-lg bg-secondary/40 px-2 py-2 text-center text-[10px] font-medium text-muted-foreground">
+                            FREE
+                          </div>
                         </td>
                       );
                     }
                     const teacher = TEACHER_BY_CODE[slot.teacher];
                     const color = teacher?.color ?? "#64748B";
                     return (
-                      <td key={p} className="align-top">
+                      <td key={`c-p-${cls}-${i}`} className="align-top">
                         <Link
                           to="/teachers/$code"
                           params={{ code: slot.teacher }}
-                          className="block rounded-xl px-2 py-1.5 text-[11px] font-semibold shadow-sm transition active:scale-95"
+                          className="block min-w-[92px] rounded-lg px-2 py-1.5 text-[11px] font-semibold shadow-sm transition active:scale-95"
                           style={{ backgroundColor: color, color: textOn(color) }}
                         >
-                          <div className="truncate font-bold">{slot.subject}</div>
-                          <div className="opacity-90">{slot.teacher}</div>
+                          <div className="truncate font-bold leading-tight">{slot.subject}</div>
+                          <div className="opacity-90 leading-tight">{slot.teacher}</div>
                         </Link>
                       </td>
                     );
