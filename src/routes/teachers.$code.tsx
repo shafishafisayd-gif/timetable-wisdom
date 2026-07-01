@@ -151,7 +151,7 @@ function TeacherPage() {
                     isNow ? "border-primary bg-primary/5" : isPast ? "border-border bg-secondary/40 opacity-70" : "border-border bg-card"
                   }`}
                 >
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary text-xs font-bold text-secondary-foreground">
+                  <div className="grid h-10 min-w-[3.25rem] shrink-0 place-items-center rounded-xl bg-secondary px-2 text-[11px] font-bold text-secondary-foreground">
                     {PERIOD_LABELS[pt.period]}
                   </div>
                   <div className="min-w-0">
