@@ -9,6 +9,7 @@ import {
   getRemainingPeriodsToday,
   getNextPeriodForTeacher,
   PERIODS,
+  PERIOD_LABELS,
   DAYS,
   DAY_LABELS,
   PERIOD_TIMES,
@@ -150,8 +151,8 @@ function TeacherPage() {
                     isNow ? "border-primary bg-primary/5" : isPast ? "border-border bg-secondary/40 opacity-70" : "border-border bg-card"
                   }`}
                 >
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary text-xs font-bold text-secondary-foreground">
-                    P{pt.period}
+                  <div className="grid h-10 min-w-[3.25rem] shrink-0 place-items-center rounded-xl bg-secondary px-2 text-[11px] font-bold text-secondary-foreground">
+                    {PERIOD_LABELS[pt.period]}
                   </div>
                   <div className="min-w-0">
                     {slot ? (
@@ -184,7 +185,7 @@ function TeacherPage() {
               <tr>
                 <th className="sticky left-0 z-10 rounded-xl bg-secondary px-2 py-2 text-left text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Day</th>
                 {PERIODS.map((p) => (
-                  <th key={p} className="rounded-xl bg-secondary px-2 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">P{p}</th>
+                  <th key={p} className="rounded-xl bg-secondary px-2 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{PERIOD_LABELS[p]}</th>
                 ))}
               </tr>
             </thead>
@@ -369,12 +370,12 @@ function NowCard({
     body = (
       <div className="mt-1.5">
         <div className="text-2xl font-bold leading-tight">{status.slot.subject}</div>
-        <div className="text-sm opacity-90">Class {status.slot.className} · P{status.period.period} · {formatTime12(status.period.start)}–{formatTime12(status.period.end)}</div>
+        <div className="text-sm opacity-90">Class {status.slot.className} · {PERIOD_LABELS[status.period.period]} · {formatTime12(status.period.start)}–{formatTime12(status.period.end)}</div>
       </div>
     );
   } else if (status.kind === "free") {
     title = "Free Period";
-    body = <div className="mt-1 text-sm opacity-80">P{status.period.period} · {formatTime12(status.period.start)}–{formatTime12(status.period.end)}</div>;
+    body = <div className="mt-1 text-sm opacity-80">{PERIOD_LABELS[status.period.period]} · {formatTime12(status.period.start)}–{formatTime12(status.period.end)}</div>;
   } else if (status.kind === "break") {
     title = status.breakSlot.label + " Break";
     icon = <Coffee className="h-5 w-5" />;
@@ -403,7 +404,7 @@ function NowCard({
       <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
         {next ? (
           <div className="rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-            Next: P{next.period.period} · {next.slot.className} · {next.slot.subject}
+            Next: {PERIOD_LABELS[next.period.period]} · {next.slot.className} · {next.slot.subject}
           </div>
         ) : (
           <div className="rounded-full bg-white/15 px-3 py-1">No more classes today</div>
