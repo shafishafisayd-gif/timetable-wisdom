@@ -9,6 +9,7 @@ import {
   SCHEDULE,
   DAYS,
   PERIODS,
+  PERIOD_LABELS,
   TEACHER_LOADS,
   textOn,
   type DayCode,
