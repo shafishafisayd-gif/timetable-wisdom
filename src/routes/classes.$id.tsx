@@ -1,12 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Coffee } from "lucide-react";
 import {
   CLASSES,
   getClassSchedule,
   DAYS,
   DAY_LABELS,
   PERIODS,
-  PERIOD_TIMES,
+  PERIOD_LABELS,
+  TIMETABLE_COLUMNS,
   TEACHER_BY_CODE,
   formatTime12,
   textOn,
