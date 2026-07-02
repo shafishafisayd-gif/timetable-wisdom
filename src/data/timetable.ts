@@ -110,17 +110,18 @@ export interface Teacher {
 
 // Colours below are read directly from the official timetable PDF legend
 // (Page 3 of NEW TT 3.pdf). Do not redesign or replace them.
+// Colours read directly from PDF fill data (RGB → hex, verified programmatically).
 export const TEACHERS: Teacher[] = [
-  { code: "HU",  shortName: "HU",  fullName: "Hassan Hudawi",          position: "Usthad", color: "#547F35", colorSoft: "#E3EDD7", syllabusPdf: "/syllabus/HU.pdf"  },
+  { code: "HU",  shortName: "HU",  fullName: "Hassan Hudawi",          position: "Usthad", color: "#548235", colorSoft: "#E3EDD7", syllabusPdf: "/syllabus/HU.pdf"  },
   { code: "ZU",  shortName: "ZU",  fullName: "Muhammed Zaini",         position: "Usthad", color: "#FFFF00", colorSoft: "#FFFFCC", syllabusPdf: "/syllabus/ZU.pdf"  },
   { code: "HW",  shortName: "HW",  fullName: "Haneefa Wafy",           position: "Usthad", color: "#7030A0", colorSoft: "#E2D4ED", syllabusPdf: "/syllabus/HW.pdf"  },
-  { code: "SF",  shortName: "SF",  fullName: "Shafeeq Faizy",          position: "Usthad", color: "#4E41F9", colorSoft: "#DDD9FD", syllabusPdf: "/syllabus/SF.pdf"  },
+  { code: "SF",  shortName: "SF",  fullName: "Shafeeq Faizy",          position: "Usthad", color: "#2345D7", colorSoft: "#D4DBF7", syllabusPdf: "/syllabus/SF.pdf"  },
   { code: "SH",  shortName: "SH",  fullName: "Swalih Hudawi",          position: "Usthad", color: "#92D050", colorSoft: "#E4F2D2", syllabusPdf: "/syllabus/SH.pdf"  },
-  { code: "SW",  shortName: "SW",  fullName: "Sufaid Wafy",            position: "Usthad", color: "#AA4D0E", colorSoft: "#F2D9C6", syllabusPdf: "/syllabus/SW.pdf"  },
+  { code: "SW",  shortName: "SW",  fullName: "Sufaid Wafy",            position: "Usthad", color: "#833C0C", colorSoft: "#E8D5C4", syllabusPdf: "/syllabus/SW.pdf"  },
   { code: "SSH", shortName: "SSH", fullName: "Sayyid Shafi Hudawi",    position: "Usthad", color: "#00B0F0", colorSoft: "#CCEFFB", syllabusPdf: "/syllabus/SSH.pdf" },
-  { code: "AJR", shortName: "AJR", fullName: "Azhar Jamal Rahmani",    position: "Usthad", color: "#FF6F0D", colorSoft: "#FFDDC2", syllabusPdf: "/syllabus/AJR.pdf" },
+  { code: "AJR", shortName: "AJR", fullName: "Azhar Jamal Rahmani",    position: "Usthad", color: "#ED7D31", colorSoft: "#FBE0CD", syllabusPdf: "/syllabus/AJR.pdf" },
   { code: "KF",  shortName: "KF",  fullName: "Kamil Faizy",            position: "Usthad", color: "#FF0000", colorSoft: "#FFCCCC", syllabusPdf: "/syllabus/KF.pdf"  },
-  { code: "AF",  shortName: "AF",  fullName: "Ajsal Faizy",            position: "Usthad", color: "#BDD7EE", colorSoft: "#E5EFF8", syllabusPdf: "/syllabus/AF.pdf"  },
+  { code: "AF",  shortName: "AF",  fullName: "Ajsal Faizy",            position: "Usthad", color: "#B4C6E7", colorSoft: "#E1E8F5", syllabusPdf: "/syllabus/AF.pdf"  },
   { code: "NF",  shortName: "NF",  fullName: "Nisar Faizy",            position: "Usthad", color: "#FF00FF", colorSoft: "#FFCCFF", syllabusPdf: "/syllabus/NF.pdf"  },
   { code: "SN",  shortName: "SN",  fullName: "Sinan Nadwi",            position: "Usthad", color: "#FFE699", colorSoft: "#FFF4D1" },
 ];
