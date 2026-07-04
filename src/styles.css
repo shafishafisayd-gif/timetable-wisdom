@@ -131,3 +131,13 @@
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
+
+@keyframes highlight-pulse-kf {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-primary); transform: scale(1); }
+  50% { box-shadow: 0 0 0 8px transparent; transform: scale(1.02); }
+}
+
+@utility highlight-pulse {
+  animation: highlight-pulse-kf 1.4s ease-in-out infinite;
+}
+

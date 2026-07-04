@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Coffee } from "lucide-react";
 import {
   DAYS,
@@ -14,6 +14,7 @@ import {
   PERIOD_LABELS,
   type DayCode,
 } from "@/data/timetable";
+import { getPreferredTeacher } from "@/lib/preferred-teacher";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,11 +27,22 @@ export const Route = createFileRoute("/")({
 });
 
 function Overall() {
+  const navigate = useNavigate();
   const today = jsDayToCode(new Date().getDay()) ?? "SAT";
   const [day, setDay] = useState<DayCode>(today);
+
+  // If a preferred teacher is stored on this device, open that teacher's page.
+  useEffect(() => {
+    const pref = getPreferredTeacher();
+    if (pref && TEACHER_BY_CODE[pref]) {
+      navigate({ to: "/teachers/$code", params: { code: pref }, replace: true });
+    }
+  }, [navigate]);
+
   const idx = DAYS.indexOf(day);
   const goPrev = () => idx > 0 && setDay(DAYS[idx - 1]);
   const goNext = () => idx < DAYS.length - 1 && setDay(DAYS[idx + 1]);
+
 
   return (
     <div className="space-y-4">

@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Coffee } from "lucide-react";
+import { z } from "zod";
 import {
   CLASSES,
   getClassSchedule,
@@ -13,8 +14,12 @@ import {
   textOn,
   type ClassId,
 } from "@/data/timetable";
+import { StudentsSection } from "@/components/StudentsSection";
+
+const searchSchema = z.object({ highlight: z.string().optional() });
 
 export const Route = createFileRoute("/classes/$id")({
+  validateSearch: searchSchema,
   loader: ({ params }) => {
     if (!CLASSES.includes(params.id as ClassId)) throw notFound();
     return null;
@@ -25,8 +30,10 @@ export const Route = createFileRoute("/classes/$id")({
 
 function ClassDetail() {
   const { id } = Route.useParams();
+  const { highlight } = Route.useSearch();
   const cls = id as ClassId;
   const sched = getClassSchedule(cls);
+
 
   let total = 0;
   const subjects = new Set<string>();
@@ -108,6 +115,9 @@ function ClassDetail() {
           </table>
         </div>
       </div>
+
+      <StudentsSection classId={cls} highlightId={highlight} />
     </div>
   );
 }
+
