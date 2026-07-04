@@ -9,7 +9,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Home, CalendarDays, GraduationCap, BarChart3 } from "lucide-react";
+import { Home, CalendarDays, GraduationCap, BarChart3, Trophy } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
