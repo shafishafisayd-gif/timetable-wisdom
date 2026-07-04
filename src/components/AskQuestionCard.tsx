@@ -64,7 +64,7 @@ export function AskQuestionCard({ teacher }: { teacher: Teacher }) {
   const roundComplete = students.length > 0 && remaining.length === 0;
   const fg = textOn(teacher.color);
 
-  if (!teaching || !classId || !subject || !period === undefined || !day) {
+  if (!teaching || !classId || !subject || period === undefined || !day) {
     return (
       <div className="card-lift p-5">
         <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
