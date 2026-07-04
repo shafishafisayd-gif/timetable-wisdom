@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, BookOpen, Coffee, Maximize2, Download, Printer, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, BookOpen, Coffee, Maximize2, Download, Printer, Loader2, LayoutGrid, LogOut } from "lucide-react";
 import {
   TEACHER_BY_CODE,
   getTeacherSchedule,
@@ -21,6 +21,9 @@ import {
   type Teacher,
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
+import { AskQuestionCard } from "@/components/AskQuestionCard";
+import { setPreferredTeacher, getPreferredTeacher, clearPreferredTeacher } from "@/lib/preferred-teacher";
+
 
 export const Route = createFileRoute("/teachers/$code")({
   head: ({ params }) => {
