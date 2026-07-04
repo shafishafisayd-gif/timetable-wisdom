@@ -115,6 +115,9 @@ function ClassDetail() {
           </table>
         </div>
       </div>
+
+      <StudentsSection classId={cls} highlightId={highlight} />
     </div>
   );
 }
+
