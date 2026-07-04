@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Trophy, Users, BookOpen, GraduationCap } from "lucide-react";
 import { fetchEvaluations, fetchStudents, computeStudentStats, type Student } from "@/lib/students-api";
-import { CLASSES, TEACHERS, TEACHER_BY_CODE, textOn } from "@/data/timetable";
+import { CLASSES, TEACHERS } from "@/data/timetable";
 
 type Scope = "college" | "class" | "subject" | "teacher";
 
