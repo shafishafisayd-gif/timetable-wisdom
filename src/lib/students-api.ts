@@ -92,6 +92,22 @@ export async function fetchCurrentRoundNo(teacherCode: string, classId: string, 
   return data && data.length > 0 ? (data[0].round_no as number) : 1;
 }
 
+// Returns effective current round: max existing + 1 if that round is complete relative to student count.
+export async function fetchEffectiveRound(
+  teacherCode: string,
+  classId: string,
+  subject: string,
+  studentCount: number,
+): Promise<{ roundNo: number; picks: RoundPick[] }> {
+  const maxRound = await fetchCurrentRoundNo(teacherCode, classId, subject);
+  const picks = await fetchRoundPicks(teacherCode, classId, subject, maxRound);
+  if (studentCount > 0 && picks.length >= studentCount) {
+    return { roundNo: maxRound + 1, picks: [] };
+  }
+  return { roundNo: maxRound, picks };
+}
+
+
 export async function insertRoundPick(pick: Omit<RoundPick, "id" | "picked_at">) {
   const { data, error } = await supabase.from("round_picks").insert(pick).select().single();
   if (error) throw error;
