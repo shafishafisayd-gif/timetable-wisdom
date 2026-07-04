@@ -127,6 +127,7 @@ const NAV = [
   { to: "/", label: "Overall", icon: CalendarDays, exact: true },
   { to: "/teachers", label: "Teachers", icon: Home, exact: false },
   { to: "/classes", label: "Classes", icon: GraduationCap, exact: false },
+  { to: "/rankings", label: "Ranks", icon: Trophy, exact: false },
   { to: "/stats", label: "Stats", icon: BarChart3, exact: false },
 ] as const;
 
@@ -134,7 +135,8 @@ function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto grid max-w-3xl grid-cols-4">
+      <div className="mx-auto grid max-w-3xl grid-cols-5">
+
         {NAV.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);
           const Icon = item.icon;
