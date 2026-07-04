@@ -64,12 +64,40 @@ function TeacherPage() {
   const workload = workloadPercent(code);
   const fg = textOn(teacher.color);
   const [tab, setTab] = useState<Tab>("overview");
+  const [isPreferred, setIsPreferred] = useState(false);
+
+  useEffect(() => {
+    setPreferredTeacher(code);
+    setIsPreferred(getPreferredTeacher() === code);
+  }, [code]);
+
+  const clearPref = () => {
+    clearPreferredTeacher();
+    setIsPreferred(false);
+  };
 
   return (
     <div className="space-y-5">
-      <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> All teachers
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Link to="/teachers" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground">
+          <ArrowLeft className="h-4 w-4" /> All teachers
+        </Link>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Link to="/" className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80">
+            <LayoutGrid className="h-3.5 w-3.5" /> Overall Timetable
+          </Link>
+          {isPreferred && (
+            <button
+              onClick={clearPref}
+              className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80"
+              title="Stop opening this teacher by default on this device"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Switch teacher
+            </button>
+          )}
+        </div>
+      </div>
+
 
       {/* Header */}
       <div className="card-lift overflow-hidden">
