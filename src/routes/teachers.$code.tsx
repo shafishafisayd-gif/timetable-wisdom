@@ -134,6 +134,10 @@ function TeacherPage() {
       <NowCard teacher={teacher} status={status} next={next} remaining={remaining} today={today} />
       )}
 
+      {/* Ask Question */}
+      {tab === "overview" && <AskQuestionCard teacher={teacher} />}
+
+
       {/* Stats grid */}
       {tab === "overview" && (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
