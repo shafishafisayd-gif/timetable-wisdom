@@ -7,8 +7,8 @@ import {
   fetchStudents,
   fetchEvaluations,
   computeStudentStats,
-  type Student,
   type StudentStats,
+  type Evaluation,
 } from "@/lib/students-api";
 
 type SortKey = "name" | "adm" | "performance" | "attendance";
@@ -22,15 +22,16 @@ export function StudentsSection({ classId, highlightId }: { classId: ClassId; hi
 
   const statsById = useMemo(() => {
     const map = new Map<string, StudentStats>();
-    const byStudent = new Map<string, ReturnType<typeof fetchEvaluations> extends Promise<infer T> ? T : never>();
+    const byStudent = new Map<string, Evaluation[]>();
     for (const e of evalsQ.data ?? []) {
-      const arr = (byStudent.get(e.student_id) as any) ?? [];
+      const arr = byStudent.get(e.student_id) ?? [];
       arr.push(e);
       byStudent.set(e.student_id, arr);
     }
-    for (const [sid, arr] of byStudent) map.set(sid, computeStudentStats(arr as any));
+    for (const [sid, arr] of byStudent) map.set(sid, computeStudentStats(arr));
     return map;
   }, [evalsQ.data]);
+
 
   // Auto-scroll to highlighted student
   useEffect(() => {
