@@ -42,7 +42,7 @@ function StudentPage() {
   if (!student) return <div className="card-soft p-6 text-center text-sm text-muted-foreground">Student not found.</div>;
 
   const evals = evalsQ.data ?? [];
-  const stats = computeStudentStats(evals.length ? evals : [{ student_id: id } as any]);
+  const stats = computeStudentStats(evals);
   const subjectStats = computeSubjectStats(evals);
 
   // Class rank
