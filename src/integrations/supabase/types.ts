@@ -14,7 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      evaluations: {
+        Row: {
+          class_id: string
+          created_at: string
+          day: string
+          id: string
+          mark: number | null
+          period: number
+          status: string
+          student_id: string
+          subject: string
+          teacher_code: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          day: string
+          id?: string
+          mark?: number | null
+          period: number
+          status: string
+          student_id: string
+          subject: string
+          teacher_code: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          day?: string
+          id?: string
+          mark?: number | null
+          period?: number
+          status?: string
+          student_id?: string
+          subject?: string
+          teacher_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      round_picks: {
+        Row: {
+          class_id: string
+          id: string
+          picked_at: string
+          round_no: number
+          student_id: string
+          subject: string
+          teacher_code: string
+        }
+        Insert: {
+          class_id: string
+          id?: string
+          picked_at?: string
+          round_no?: number
+          student_id: string
+          subject: string
+          teacher_code: string
+        }
+        Update: {
+          class_id?: string
+          id?: string
+          picked_at?: string
+          round_no?: number
+          student_id?: string
+          subject?: string
+          teacher_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "round_picks_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          admission_no: number
+          class_id: string
+          created_at: string
+          id: string
+          name: string
+          sl_no: number | null
+        }
+        Insert: {
+          admission_no: number
+          class_id: string
+          created_at?: string
+          id?: string
+          name: string
+          sl_no?: number | null
+        }
+        Update: {
+          admission_no?: number
+          class_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          sl_no?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
