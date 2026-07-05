@@ -1,6 +1,7 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Clock, BookOpen, Coffee, Maximize2, Download, Printer, Loader2, LayoutGrid, LogOut } from "lucide-react";
+import { BREAKS } from "@/data/timetable";
 import {
   TEACHER_BY_CODE,
   getTeacherSchedule,
