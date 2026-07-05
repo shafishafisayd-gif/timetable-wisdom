@@ -176,10 +176,16 @@ function TopBar() {
   );
 }
 
+function RealtimeBridge() {
+  useRealtimeSync();
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
+      <RealtimeBridge />
       <div className="min-h-screen bg-background">
         <TopBar />
         <main className="mx-auto max-w-3xl px-4 pb-28 pt-4">
@@ -190,3 +196,4 @@ function RootComponent() {
     </QueryClientProvider>
   );
 }
+
