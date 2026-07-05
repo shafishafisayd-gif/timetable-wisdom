@@ -91,7 +91,7 @@ function TeacherPage() {
           </Link>
           {isPreferred && (
             <button
-              onClick={clearPref}
+              onClick={switchTeacher}
               className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80"
               title="Stop opening this teacher by default on this device"
             >
