@@ -13,6 +13,8 @@ import { Home, CalendarDays, GraduationCap, BarChart3, Trophy } from "lucide-rea
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { useRealtimeSync } from "../lib/use-realtime-sync";
+
 
 function NotFoundComponent() {
   return (
