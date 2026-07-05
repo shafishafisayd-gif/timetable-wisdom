@@ -23,6 +23,7 @@ export function useRealtimeSync() {
         { event: "*", schema: "public", table: "round_picks" },
         () => {
           qc.invalidateQueries({ queryKey: ["round_picks"] });
+          qc.invalidateQueries({ queryKey: ["daily_round_picks"] });
         },
       )
       .on(
