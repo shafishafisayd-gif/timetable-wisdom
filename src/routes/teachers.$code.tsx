@@ -1,6 +1,7 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Clock, BookOpen, Coffee, Maximize2, Download, Printer, Loader2, LayoutGrid, LogOut } from "lucide-react";
+import { BREAKS } from "@/data/timetable";
 import {
   TEACHER_BY_CODE,
   getTeacherSchedule,
@@ -65,15 +66,17 @@ function TeacherPage() {
   const fg = textOn(teacher.color);
   const [tab, setTab] = useState<Tab>("overview");
   const [isPreferred, setIsPreferred] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setPreferredTeacher(code);
     setIsPreferred(getPreferredTeacher() === code);
   }, [code]);
 
-  const clearPref = () => {
+  const switchTeacher = () => {
     clearPreferredTeacher();
     setIsPreferred(false);
+    navigate({ to: "/teachers" });
   };
 
   return (
@@ -88,7 +91,7 @@ function TeacherPage() {
           </Link>
           {isPreferred && (
             <button
-              onClick={clearPref}
+              onClick={switchTeacher}
               className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80"
               title="Stop opening this teacher by default on this device"
             >
@@ -171,44 +174,102 @@ function TeacherPage() {
         <section className="card-soft p-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground">Today · {DAY_LABELS[today]}</h3>
-            <span className="text-xs text-muted-foreground">{sched[today] && Object.values(sched[today]).filter(Boolean).length} periods</span>
+            <span className="text-xs text-muted-foreground">
+              {sched[today] && Object.values(sched[today]).filter(Boolean).length} periods
+            </span>
           </div>
           <div className="mt-3 space-y-2">
-            {PERIOD_TIMES.map((pt) => {
-              const slot = sched[today][pt.period];
-              const nowMin = now.getHours() * 60 + now.getMinutes();
-              const isNow = nowMin >= pt.startMin && nowMin < pt.endMin;
-              const isPast = nowMin >= pt.endMin;
-              return (
-                <div
-                  key={pt.period}
-                  className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 transition ${
-                    isNow ? "border-primary bg-primary/5" : isPast ? "border-border bg-secondary/40 opacity-70" : "border-border bg-card"
-                  }`}
-                >
-                  <div className="grid h-10 min-w-[3.25rem] shrink-0 place-items-center rounded-xl bg-secondary px-2 text-[11px] font-bold text-secondary-foreground">
-                    {PERIOD_LABELS[pt.period]}
+            {[
+              ...PERIOD_TIMES.map((pt) => ({ kind: "period" as const, pt })),
+              ...BREAKS.map((br) => ({ kind: "break" as const, br })),
+            ]
+              .sort((a, b) => (a.kind === "period" ? a.pt.startMin : a.br.startMin) - (b.kind === "period" ? b.pt.startMin : b.br.startMin))
+              .map((entry, idx) => {
+                const nowMin = now.getHours() * 60 + now.getMinutes();
+                if (entry.kind === "break") {
+                  const br = entry.br;
+                  const isNow = nowMin >= br.startMin && nowMin < br.endMin;
+                  const isPast = nowMin >= br.endMin;
+                  return (
+                    <div
+                      key={`br-${idx}`}
+                      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 transition ${
+                        isNow ? "border-warning bg-warning/10" : isPast ? "border-border bg-secondary/40 opacity-70" : "border-border/60 bg-secondary/20"
+                      }`}
+                    >
+                      <div className="grid h-10 min-w-[3.25rem] shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                        <Coffee className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-foreground">{br.label} Break</div>
+                        <StatusChip label={isNow ? "Now" : isPast ? "Finished" : "Upcoming"} tone={isNow ? "now" : isPast ? "past" : "upcoming"} />
+                      </div>
+                      <div className="text-right text-[11px] font-medium text-muted-foreground">
+                        {formatTime12(br.start)}
+                        <div className="text-muted-foreground/70">{formatTime12(br.end)}</div>
+                      </div>
+                    </div>
+                  );
+                }
+                const pt = entry.pt;
+                const slot = sched[today][pt.period];
+                const isNow = nowMin >= pt.startMin && nowMin < pt.endMin;
+                const isPast = nowMin >= pt.endMin;
+                const isFree = !slot;
+                const label = isFree
+                  ? isPast ? "Finished" : isNow ? "Free Now" : "Free Period"
+                  : isPast ? "Completed" : isNow ? "Teaching Now" : "Upcoming";
+                const tone = isNow ? "now" : isPast ? "past" : isFree ? "free" : "upcoming";
+                const cardColor = slot ? teacher.color : undefined;
+                const cardFg = slot ? textOn(teacher.color) : undefined;
+                const countdownMin = !isPast && !isNow ? pt.startMin - nowMin : null;
+                return (
+                  <div
+                    key={`p-${pt.period}`}
+                    className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border p-3 transition ${
+                      isNow && slot ? "border-transparent shadow-sm" : isNow ? "border-primary bg-primary/5" : isPast ? "border-border bg-secondary/40 opacity-70" : "border-border bg-card"
+                    }`}
+                    style={isNow && slot ? { backgroundColor: cardColor, color: cardFg, borderColor: cardColor } : undefined}
+                  >
+                    <div
+                      className="grid h-10 min-w-[3.25rem] shrink-0 place-items-center rounded-xl px-2 text-[11px] font-bold"
+                      style={
+                        isNow && slot
+                          ? { backgroundColor: "rgba(255,255,255,0.22)", color: cardFg }
+                          : undefined
+                      }
+                    >
+                      <span className={isNow && slot ? "" : "text-secondary-foreground"}>{PERIOD_LABELS[pt.period]}</span>
+                    </div>
+                    <div className="min-w-0">
+                      {slot ? (
+                        <>
+                          <div className="truncate text-sm font-semibold">{slot.subject}</div>
+                          <div className={`text-xs ${isNow ? "opacity-90" : "text-muted-foreground"}`}>Class {slot.className}</div>
+                        </>
+                      ) : (
+                        <div className="text-sm font-medium text-muted-foreground">Free Period</div>
+                      )}
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <StatusChip label={label} tone={tone} inverse={isNow && !!slot} />
+                        {countdownMin !== null && countdownMin > 0 && countdownMin <= 60 && (
+                          <span className="text-[10px] font-semibold text-muted-foreground">
+                            in {countdownMin < 60 ? `${countdownMin}m` : `${Math.floor(countdownMin / 60)}h ${countdownMin % 60}m`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className={`text-right text-[11px] font-medium ${isNow && slot ? "" : "text-muted-foreground"}`}>
+                      {formatTime12(pt.start)}
+                      <div className={isNow && slot ? "opacity-80" : "text-muted-foreground/70"}>{formatTime12(pt.end)}</div>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    {slot ? (
-                      <>
-                        <div className="truncate text-sm font-semibold text-foreground">{slot.subject}</div>
-                        <div className="text-xs text-muted-foreground">Class {slot.className}</div>
-                      </>
-                    ) : (
-                      <div className="text-sm font-medium text-muted-foreground">Free Period</div>
-                    )}
-                  </div>
-                  <div className="text-right text-[11px] font-medium text-muted-foreground">
-                    {formatTime12(pt.start)}
-                    <div className="text-muted-foreground/70">{formatTime12(pt.end)}</div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </section>
       )}
+
 
       {/* Weekly timetable */}
       {(tab === "overview" || tab === "weekly") && (
@@ -373,6 +434,17 @@ function SyllabusViewer({ teacher }: { teacher: Teacher }) {
   );
 }
 
+
+function StatusChip({ label, tone, inverse }: { label: string; tone: "now" | "past" | "upcoming" | "free"; inverse?: boolean }) {
+  const base = "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide";
+  if (inverse) return <span className={`${base} bg-white/25 text-white`}>{label}</span>;
+  const toneCls =
+    tone === "now" ? "bg-green-500/15 text-green-700"
+      : tone === "past" ? "bg-secondary text-muted-foreground"
+      : tone === "free" ? "bg-amber-500/15 text-amber-700"
+      : "bg-primary/10 text-primary";
+  return <span className={`${base} ${toneCls}`}>{label}</span>;
+}
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
