@@ -435,6 +435,17 @@ function SyllabusViewer({ teacher }: { teacher: Teacher }) {
 }
 
 
+function StatusChip({ label, tone, inverse }: { label: string; tone: "now" | "past" | "upcoming" | "free"; inverse?: boolean }) {
+  const base = "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide";
+  if (inverse) return <span className={`${base} bg-white/25 text-white`}>{label}</span>;
+  const toneCls =
+    tone === "now" ? "bg-green-500/15 text-green-700"
+      : tone === "past" ? "bg-secondary text-muted-foreground"
+      : tone === "free" ? "bg-amber-500/15 text-amber-700"
+      : "bg-primary/10 text-primary";
+  return <span className={`${base} ${toneCls}`}>{label}</span>;
+}
+
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="card-soft p-3 text-center">
