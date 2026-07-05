@@ -66,15 +66,17 @@ function TeacherPage() {
   const fg = textOn(teacher.color);
   const [tab, setTab] = useState<Tab>("overview");
   const [isPreferred, setIsPreferred] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setPreferredTeacher(code);
     setIsPreferred(getPreferredTeacher() === code);
   }, [code]);
 
-  const clearPref = () => {
+  const switchTeacher = () => {
     clearPreferredTeacher();
     setIsPreferred(false);
+    navigate({ to: "/teachers" });
   };
 
   return (
