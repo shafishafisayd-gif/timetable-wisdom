@@ -92,6 +92,53 @@ export async function fetchCurrentRoundNo(teacherCode: string, classId: string, 
   return data && data.length > 0 ? (data[0].round_no as number) : 1;
 }
 
+// ---- Daily round helpers ----
+function todayStartIso(): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
+/**
+ * Fetch today's picks for a teacher+class+subject. Rounds are scoped per day:
+ * yesterday's picks never affect today's eligibility.
+ */
+export async function fetchTodayRoundPicks(
+  teacherCode: string,
+  classId: string,
+  subject: string,
+): Promise<RoundPick[]> {
+  const { data, error } = await supabase
+    .from("round_picks")
+    .select("*")
+    .eq("teacher_code", teacherCode)
+    .eq("class_id", classId)
+    .eq("subject", subject)
+    .gte("picked_at", todayStartIso())
+    .order("picked_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as RoundPick[];
+}
+
+/**
+ * Reset today's random-selection cycle. Only deletes today's round_picks
+ * — evaluations, marks, minus, absent records and rankings are untouched.
+ */
+export async function resetTodayRound(
+  teacherCode: string,
+  classId: string,
+  subject: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("round_picks")
+    .delete()
+    .eq("teacher_code", teacherCode)
+    .eq("class_id", classId)
+    .eq("subject", subject)
+    .gte("picked_at", todayStartIso());
+  if (error) throw error;
+}
+
 // Returns effective current round: max existing + 1 if that round is complete relative to student count.
 export async function fetchEffectiveRound(
   teacherCode: string,
