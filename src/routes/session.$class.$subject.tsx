@@ -255,7 +255,7 @@ function SessionPage() {
             <div className="text-sm text-muted-foreground">
               · Class {classId} · {teacher.shortName}
               {day ? ` · ${DAY_LABELS[day]}` : ""}
-              {period ? ` · ${PERIOD_LABELS[period]}` : ""}
+              {period ? ` · P${period}` : ""}
             </div>
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
