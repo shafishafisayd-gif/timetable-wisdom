@@ -7,10 +7,10 @@ import { ArrowLeft, Check, X, UserX, Sparkles, RotateCcw, User } from "lucide-re
 import {
   TEACHER_BY_CODE,
   jsDayToCode,
-  PERIOD_LABELS,
   DAY_LABELS,
   textOn,
   type ClassId,
+
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
 import {
