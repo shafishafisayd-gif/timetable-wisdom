@@ -66,19 +66,10 @@ function TeacherPage() {
   const workload = workloadPercent(code);
   const fg = textOn(teacher.color);
   const [tab, setTab] = useState<Tab>("overview");
-  const [isPreferred, setIsPreferred] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     setPreferredTeacher(code);
-    setIsPreferred(getPreferredTeacher() === code);
   }, [code]);
-
-  const switchTeacher = () => {
-    clearPreferredTeacher();
-    setIsPreferred(false);
-    navigate({ to: "/teachers" });
-  };
 
   return (
     <div className="space-y-5">
@@ -90,16 +81,8 @@ function TeacherPage() {
           <Link to="/" className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80">
             <LayoutGrid className="h-3.5 w-3.5" /> Overall Timetable
           </Link>
-          {isPreferred && (
-            <button
-              onClick={switchTeacher}
-              className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80"
-              title="Stop opening this teacher by default on this device"
-            >
-              <LogOut className="h-3.5 w-3.5" /> Switch teacher
-            </button>
-          )}
         </div>
+
       </div>
 
 
