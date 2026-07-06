@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
-import { zodValidator } from "@tanstack/zod-adapter";
+
 import { ArrowLeft, Check, X, UserX, Sparkles, RotateCcw, User } from "lucide-react";
 import {
   TEACHER_BY_CODE,
