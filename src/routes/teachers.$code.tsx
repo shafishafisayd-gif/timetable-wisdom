@@ -24,7 +24,7 @@ import {
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
 import { AskQuestionCard } from "@/components/AskQuestionCard";
-import { setPreferredTeacher, getPreferredTeacher, clearPreferredTeacher } from "@/lib/preferred-teacher";
+import { setPreferredTeacher } from "@/lib/preferred-teacher";
 
 
 export const Route = createFileRoute("/teachers/$code")({
