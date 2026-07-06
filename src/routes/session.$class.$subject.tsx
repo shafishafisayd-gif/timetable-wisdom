@@ -31,7 +31,7 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/session/$class/$subject")({
-  validateSearch: zodValidator(searchSchema),
+  validateSearch: searchSchema,
   head: ({ params }) => ({
     meta: [
       { title: `${params.subject} · ${params.class} · Session` },
