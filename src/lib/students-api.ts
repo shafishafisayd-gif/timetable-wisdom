@@ -93,11 +93,29 @@ export async function fetchCurrentRoundNo(teacherCode: string, classId: string, 
 }
 
 // ---- Daily round helpers ----
-function todayStartIso(): string {
+export function todayStartIso(): string {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d.toISOString();
 }
+
+export async function fetchTodayEvaluations(
+  teacherCode: string,
+  classId: string,
+  subject: string,
+): Promise<Evaluation[]> {
+  const { data, error } = await supabase
+    .from("evaluations")
+    .select("*")
+    .eq("teacher_code", teacherCode)
+    .eq("class_id", classId)
+    .eq("subject", subject)
+    .gte("created_at", todayStartIso())
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Evaluation[];
+}
+
 
 /**
  * Fetch today's picks for a teacher+class+subject. Rounds are scoped per day:

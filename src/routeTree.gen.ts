@@ -17,6 +17,7 @@ import { Route as ClassesIndexRouteImport } from './routes/classes.index'
 import { Route as TeachersCodeRouteImport } from './routes/teachers.$code'
 import { Route as StudentsIdRouteImport } from './routes/students.$id'
 import { Route as ClassesIdRouteImport } from './routes/classes.$id'
+import { Route as SessionClassSubjectRouteImport } from './routes/session.$class.$subject'
 
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
@@ -58,6 +59,11 @@ const ClassesIdRoute = ClassesIdRouteImport.update({
   path: '/classes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SessionClassSubjectRoute = SessionClassSubjectRouteImport.update({
+  id: '/session/$class/$subject',
+  path: '/session/$class/$subject',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/teachers/$code': typeof TeachersCodeRoute
   '/classes/': typeof ClassesIndexRoute
   '/teachers/': typeof TeachersIndexRoute
+  '/session/$class/$subject': typeof SessionClassSubjectRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/teachers/$code': typeof TeachersCodeRoute
   '/classes': typeof ClassesIndexRoute
   '/teachers': typeof TeachersIndexRoute
+  '/session/$class/$subject': typeof SessionClassSubjectRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/teachers/$code': typeof TeachersCodeRoute
   '/classes/': typeof ClassesIndexRoute
   '/teachers/': typeof TeachersIndexRoute
+  '/session/$class/$subject': typeof SessionClassSubjectRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/teachers/$code'
     | '/classes/'
     | '/teachers/'
+    | '/session/$class/$subject'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/teachers/$code'
     | '/classes'
     | '/teachers'
+    | '/session/$class/$subject'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/teachers/$code'
     | '/classes/'
     | '/teachers/'
+    | '/session/$class/$subject'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   TeachersCodeRoute: typeof TeachersCodeRoute
   ClassesIndexRoute: typeof ClassesIndexRoute
   TeachersIndexRoute: typeof TeachersIndexRoute
+  SessionClassSubjectRoute: typeof SessionClassSubjectRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/session/$class/$subject': {
+      id: '/session/$class/$subject'
+      path: '/session/$class/$subject'
+      fullPath: '/session/$class/$subject'
+      preLoaderRoute: typeof SessionClassSubjectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +224,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeachersCodeRoute: TeachersCodeRoute,
   ClassesIndexRoute: ClassesIndexRoute,
   TeachersIndexRoute: TeachersIndexRoute,
+  SessionClassSubjectRoute: SessionClassSubjectRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
