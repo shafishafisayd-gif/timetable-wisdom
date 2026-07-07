@@ -9,8 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TimetableRouteImport } from './routes/timetable'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as RankingsRouteImport } from './routes/rankings'
+import { Route as AttentionRouteImport } from './routes/attention'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeachersIndexRouteImport } from './routes/teachers.index'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
@@ -19,6 +21,11 @@ import { Route as StudentsIdRouteImport } from './routes/students.$id'
 import { Route as ClassesIdRouteImport } from './routes/classes.$id'
 import { Route as SessionClassSubjectRouteImport } from './routes/session.$class.$subject'
 
+const TimetableRoute = TimetableRouteImport.update({
+  id: '/timetable',
+  path: '/timetable',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
@@ -27,6 +34,11 @@ const StatsRoute = StatsRouteImport.update({
 const RankingsRoute = RankingsRouteImport.update({
   id: '/rankings',
   path: '/rankings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AttentionRoute = AttentionRouteImport.update({
+  id: '/attention',
+  path: '/attention',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -67,8 +79,10 @@ const SessionClassSubjectRoute = SessionClassSubjectRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/attention': typeof AttentionRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
+  '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
   '/teachers/$code': typeof TeachersCodeRoute
@@ -78,8 +92,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/attention': typeof AttentionRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
+  '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
   '/teachers/$code': typeof TeachersCodeRoute
@@ -90,8 +106,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/attention': typeof AttentionRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
+  '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
   '/teachers/$code': typeof TeachersCodeRoute
@@ -103,8 +121,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/attention'
     | '/rankings'
     | '/stats'
+    | '/timetable'
     | '/classes/$id'
     | '/students/$id'
     | '/teachers/$code'
@@ -114,8 +134,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/attention'
     | '/rankings'
     | '/stats'
+    | '/timetable'
     | '/classes/$id'
     | '/students/$id'
     | '/teachers/$code'
@@ -125,8 +147,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/attention'
     | '/rankings'
     | '/stats'
+    | '/timetable'
     | '/classes/$id'
     | '/students/$id'
     | '/teachers/$code'
@@ -137,8 +161,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AttentionRoute: typeof AttentionRoute
   RankingsRoute: typeof RankingsRoute
   StatsRoute: typeof StatsRoute
+  TimetableRoute: typeof TimetableRoute
   ClassesIdRoute: typeof ClassesIdRoute
   StudentsIdRoute: typeof StudentsIdRoute
   TeachersCodeRoute: typeof TeachersCodeRoute
@@ -149,6 +175,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/timetable': {
+      id: '/timetable'
+      path: '/timetable'
+      fullPath: '/timetable'
+      preLoaderRoute: typeof TimetableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stats': {
       id: '/stats'
       path: '/stats'
@@ -161,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/rankings'
       fullPath: '/rankings'
       preLoaderRoute: typeof RankingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attention': {
+      id: '/attention'
+      path: '/attention'
+      fullPath: '/attention'
+      preLoaderRoute: typeof AttentionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -217,8 +257,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AttentionRoute: AttentionRoute,
   RankingsRoute: RankingsRoute,
   StatsRoute: StatsRoute,
+  TimetableRoute: TimetableRoute,
   ClassesIdRoute: ClassesIdRoute,
   StudentsIdRoute: StudentsIdRoute,
   TeachersCodeRoute: TeachersCodeRoute,

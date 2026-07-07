@@ -279,17 +279,17 @@ function SessionPage() {
                   >
                     <User className="h-6 w-6" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Selected Student</div>
                     <Link
                       to="/students/$id"
                       params={{ id: activeStudent.id }}
-                      className="block truncate text-xl font-bold text-foreground hover:underline"
+                      className="block break-words text-xl font-bold leading-snug text-foreground hover:underline sm:text-2xl"
                     >
                       {activeStudent.name}
                     </Link>
-                    <div className="text-xs text-muted-foreground">
-                      Adm #{activeStudent.admission_no} · Class {activeStudent.class_id}
+                    <div className="mt-1 text-xs text-muted-foreground break-words">
+                      Adm #{activeStudent.admission_no} · Class {activeStudent.class_id} · {subject}
                     </div>
                   </div>
                 </div>

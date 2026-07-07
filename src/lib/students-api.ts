@@ -185,6 +185,20 @@ export async function insertEvaluation(evalRow: Omit<Evaluation, "id" | "created
   return data as Evaluation;
 }
 
+export async function updateEvaluation(
+  id: string,
+  patch: Partial<Pick<Evaluation, "status" | "mark">>,
+) {
+  const { data, error } = await supabase.from("evaluations").update(patch).eq("id", id).select().single();
+  if (error) throw error;
+  return data as Evaluation;
+}
+
+export async function deleteEvaluation(id: string) {
+  const { error } = await supabase.from("evaluations").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export function computeStudentStats(evals: Evaluation[]): StudentStats {
   const s: StudentStats = {
     studentId: evals[0]?.student_id ?? "",
