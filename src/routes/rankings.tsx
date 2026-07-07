@@ -71,9 +71,14 @@ function RankingsPage() {
   return (
     <div className="space-y-4">
       <div className="card-soft p-4">
-        <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5 text-primary" />
-          <h1 className="text-xl font-bold">Rankings</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            <h1 className="text-xl font-bold">Rankings</h1>
+          </div>
+          <Link to="/attention" className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-[11px] font-semibold text-amber-700 transition hover:bg-amber-200">
+            ⚠ Needs Attention
+          </Link>
         </div>
         <p className="mt-0.5 text-sm text-muted-foreground">Live rankings based on all recorded evaluations.</p>
 
