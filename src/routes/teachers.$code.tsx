@@ -78,7 +78,7 @@ function TeacherPage() {
           <ArrowLeft className="h-4 w-4" /> All teachers
         </Link>
         <div className="flex flex-wrap items-center gap-1.5">
-          <Link to="/" className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80">
+          <Link to="/timetable" className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80">
             <LayoutGrid className="h-3.5 w-3.5" /> Overall Timetable
           </Link>
         </div>
