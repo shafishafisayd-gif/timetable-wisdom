@@ -1,15 +1,19 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Award, Check, X, UserX, TrendingUp } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { ArrowLeft, Award, Check, X, UserX, TrendingUp, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   fetchEvaluations,
   fetchStudents,
   computeStudentStats,
   computeSubjectStats,
+  updateEvaluation,
+  deleteEvaluation,
   type Student,
+  type Evaluation,
 } from "@/lib/students-api";
-import type { ClassId } from "@/data/timetable";
+import { DAY_LABELS, TEACHER_BY_CODE, type ClassId } from "@/data/timetable";
 
 async function fetchStudent(id: string): Promise<Student | null> {
   const { data, error } = await supabase.from("students").select("*").eq("id", id).maybeSingle();
@@ -24,6 +28,7 @@ export const Route = createFileRoute("/students/$id")({
 
 function StudentPage() {
   const { id } = Route.useParams();
+  const qc = useQueryClient();
   const studentQ = useQuery({ queryKey: ["student", id], queryFn: () => fetchStudent(id) });
   const evalsQ = useQuery({ queryKey: ["evaluations", "student", id], queryFn: () => fetchEvaluations({ studentId: id }) });
   const classmatesQ = useQuery({
@@ -37,6 +42,23 @@ function StudentPage() {
     enabled: !!studentQ.data?.class_id,
   });
 
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ["evaluations"] });
+    qc.invalidateQueries({ queryKey: ["today_evaluations"] });
+  };
+
+  const delMut = useMutation({
+    mutationFn: (evalId: string) => deleteEvaluation(evalId),
+    onSuccess: invalidateAll,
+  });
+  const updMut = useMutation({
+    mutationFn: (v: { id: string; patch: Partial<Pick<Evaluation, "status" | "mark">> }) =>
+      updateEvaluation(v.id, v.patch),
+    onSuccess: invalidateAll,
+  });
+
+  const [editing, setEditing] = useState<Evaluation | null>(null);
+
   if (studentQ.isLoading) return <div className="card-soft p-6 text-center text-sm text-muted-foreground">Loading…</div>;
   const student = studentQ.data;
   if (!student) return <div className="card-soft p-6 text-center text-sm text-muted-foreground">Student not found.</div>;
@@ -45,7 +67,6 @@ function StudentPage() {
   const stats = computeStudentStats(evals);
   const subjectStats = computeSubjectStats(evals);
 
-  // Class rank
   const classEvals = classEvalsQ.data ?? [];
   const byStudent = new Map<string, typeof classEvals>();
   for (const e of classEvals) {
@@ -68,11 +89,11 @@ function StudentPage() {
 
       <div className="card-lift p-5">
         <div className="flex items-center gap-3">
-          <div className="grid h-14 w-14 place-items-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground">
+          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-primary text-lg font-bold text-primary-foreground">
             #{student.admission_no}
           </div>
-          <div className="min-w-0">
-            <h1 className="truncate text-xl font-bold">{student.name}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="break-words text-xl font-bold leading-snug">{student.name}</h1>
             <p className="text-sm text-muted-foreground">Class {student.class_id} · Admission {student.admission_no}</p>
           </div>
         </div>
@@ -121,29 +142,152 @@ function StudentPage() {
       <section className="card-soft p-4">
         <div className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold">Recent Activity</h3>
+          <h3 className="text-sm font-semibold">Evaluation History</h3>
+          <span className="ml-auto text-xs text-muted-foreground">{evals.length} record{evals.length !== 1 ? "s" : ""}</span>
         </div>
         {evals.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">No history yet.</p>
         ) : (
-          <div className="mt-3 space-y-1.5">
-            {evals.slice(0, 20).map((e) => (
-              <div key={e.id} className="flex items-center justify-between rounded-xl bg-secondary/50 px-3 py-2 text-xs">
-                <div className="flex items-center gap-2 min-w-0">
-                  {e.status === "answered" ? <Check className="h-3.5 w-3.5 text-green-600" /> :
-                   e.status === "not_answered" ? <X className="h-3.5 w-3.5 text-red-600" /> :
-                   <UserX className="h-3.5 w-3.5 text-amber-600" />}
-                  <span className="truncate font-semibold text-foreground">{e.subject}</span>
-                  <span className="truncate text-muted-foreground">· {e.teacher_code}</span>
+          <div className="mt-3 space-y-2">
+            {evals.map((e) => {
+              const teacher = TEACHER_BY_CODE[e.teacher_code];
+              const d = new Date(e.created_at);
+              const dateStr = d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+              const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+              return (
+                <div key={e.id} className="rounded-2xl border border-border bg-card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {e.status === "answered" ? <Check className="h-3.5 w-3.5 text-green-600" /> :
+                         e.status === "not_answered" ? <X className="h-3.5 w-3.5 text-red-600" /> :
+                         <UserX className="h-3.5 w-3.5 text-amber-600" />}
+                        <span className="font-semibold text-foreground">{e.subject}</span>
+                        <span className="text-xs text-muted-foreground">· {teacher?.shortName ?? e.teacher_code}</span>
+                        <span className="text-xs text-muted-foreground">· Class {e.class_id}</span>
+                      </div>
+                      <div className="mt-1 text-[11px] text-muted-foreground">
+                        {dateStr} · {DAY_LABELS[e.day as keyof typeof DAY_LABELS] ?? e.day} · P{e.period} · {timeStr}
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span className={`rounded-lg px-2 py-1 text-xs font-bold ${
+                        e.status === "answered" ? "bg-green-100 text-green-700" :
+                        e.status === "not_answered" ? "bg-red-100 text-red-700" :
+                        "bg-amber-100 text-amber-700"
+                      }`}>
+                        {e.status === "answered" ? `${e.mark}/5` : e.status === "not_answered" ? `${e.mark}` : "Absent"}
+                      </span>
+                      <button
+                        onClick={() => setEditing(e)}
+                        className="grid h-7 w-7 place-items-center rounded-lg bg-secondary text-secondary-foreground transition hover:bg-primary hover:text-primary-foreground"
+                        aria-label="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm("Delete this evaluation? This will update all statistics.")) {
+                            delMut.mutate(e.id);
+                          }
+                        }}
+                        disabled={delMut.isPending}
+                        className="grid h-7 w-7 place-items-center rounded-lg bg-secondary text-secondary-foreground transition hover:bg-red-600 hover:text-white disabled:opacity-50"
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="ml-2 shrink-0 font-semibold">
-                  {e.status === "answered" ? `${e.mark}/10` : e.status === "not_answered" ? "-1" : "Absent"}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
+
+      {editing && (
+        <EditModal
+          evalRow={editing}
+          onClose={() => setEditing(null)}
+          onSave={(patch) => {
+            updMut.mutate({ id: editing.id, patch }, { onSuccess: () => setEditing(null) });
+          }}
+          saving={updMut.isPending}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditModal({
+  evalRow,
+  onClose,
+  onSave,
+  saving,
+}: {
+  evalRow: Evaluation;
+  onClose: () => void;
+  onSave: (patch: Partial<Pick<Evaluation, "status" | "mark">>) => void;
+  saving: boolean;
+}) {
+  const [status, setStatus] = useState<Evaluation["status"]>(evalRow.status);
+  const [mark, setMark] = useState<number>(evalRow.mark ?? 0);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onClose}>
+      <div className="w-full max-w-sm rounded-3xl bg-card p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-lg font-bold">Edit Evaluation</h3>
+        <p className="mt-0.5 text-xs text-muted-foreground">{evalRow.subject} · P{evalRow.period}</p>
+
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {(["answered", "not_answered", "absent"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => { setStatus(s); if (s === "absent") setMark(0); }}
+              className={`rounded-xl px-2 py-2 text-xs font-bold transition ${
+                status === s ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+              }`}
+            >
+              {s === "answered" ? "Answered" : s === "not_answered" ? "Not Answered" : "Absent"}
+            </button>
+          ))}
+        </div>
+
+        {status === "answered" && (
+          <div className="mt-4">
+            <div className="text-xs font-semibold text-muted-foreground">Mark (0–5)</div>
+            <div className="mt-2 grid grid-cols-6 gap-1.5">
+              {[0, 1, 2, 3, 4, 5].map((m) => (
+                <button key={m} onClick={() => setMark(m)}
+                  className={`rounded-lg py-2 text-sm font-bold ${mark === m ? "bg-green-600 text-white" : "bg-secondary text-secondary-foreground"}`}>{m}</button>
+              ))}
+            </div>
+          </div>
+        )}
+        {status === "not_answered" && (
+          <div className="mt-4">
+            <div className="text-xs font-semibold text-muted-foreground">Minus (0 to −5)</div>
+            <div className="mt-2 grid grid-cols-6 gap-1.5">
+              {[0, -1, -2, -3, -4, -5].map((m) => (
+                <button key={m} onClick={() => setMark(m)}
+                  className={`rounded-lg py-2 text-sm font-bold ${mark === m ? "bg-red-600 text-white" : "bg-secondary text-secondary-foreground"}`}>{m}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-5 flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-xl bg-secondary py-2.5 text-sm font-semibold text-secondary-foreground">Cancel</button>
+          <button
+            disabled={saving}
+            onClick={() => onSave({ status, mark: status === "absent" ? null : mark })}
+            className="flex-1 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
