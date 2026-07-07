@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TimetableRouteImport } from './routes/timetable'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,11 @@ import { Route as StudentsIdRouteImport } from './routes/students.$id'
 import { Route as ClassesIdRouteImport } from './routes/classes.$id'
 import { Route as SessionClassSubjectRouteImport } from './routes/session.$class.$subject'
 
+const TimetableRoute = TimetableRouteImport.update({
+  id: '/timetable',
+  path: '/timetable',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
+  '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
   '/teachers/$code': typeof TeachersCodeRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
+  '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
   '/teachers/$code': typeof TeachersCodeRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
+  '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
   '/teachers/$code': typeof TeachersCodeRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/rankings'
     | '/stats'
+    | '/timetable'
     | '/classes/$id'
     | '/students/$id'
     | '/teachers/$code'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/rankings'
     | '/stats'
+    | '/timetable'
     | '/classes/$id'
     | '/students/$id'
     | '/teachers/$code'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/rankings'
     | '/stats'
+    | '/timetable'
     | '/classes/$id'
     | '/students/$id'
     | '/teachers/$code'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RankingsRoute: typeof RankingsRoute
   StatsRoute: typeof StatsRoute
+  TimetableRoute: typeof TimetableRoute
   ClassesIdRoute: typeof ClassesIdRoute
   StudentsIdRoute: typeof StudentsIdRoute
   TeachersCodeRoute: typeof TeachersCodeRoute
@@ -149,6 +162,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/timetable': {
+      id: '/timetable'
+      path: '/timetable'
+      fullPath: '/timetable'
+      preLoaderRoute: typeof TimetableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stats': {
       id: '/stats'
       path: '/stats'
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RankingsRoute: RankingsRoute,
   StatsRoute: StatsRoute,
+  TimetableRoute: TimetableRoute,
   ClassesIdRoute: ClassesIdRoute,
   StudentsIdRoute: StudentsIdRoute,
   TeachersCodeRoute: TeachersCodeRoute,
