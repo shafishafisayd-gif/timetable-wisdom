@@ -126,6 +126,108 @@ export type Database = {
         }
         Relationships: []
       }
+      syllabus_history: {
+        Row: {
+          academic_year: string
+          changed_at: string
+          class_id: string
+          id: string
+          month: number
+          new_status: string
+          previous_status: string | null
+          subject: string
+          teacher_code: string
+          updated_by: string | null
+        }
+        Insert: {
+          academic_year: string
+          changed_at?: string
+          class_id: string
+          id?: string
+          month: number
+          new_status: string
+          previous_status?: string | null
+          subject: string
+          teacher_code: string
+          updated_by?: string | null
+        }
+        Update: {
+          academic_year?: string
+          changed_at?: string
+          class_id?: string
+          id?: string
+          month?: number
+          new_status?: string
+          previous_status?: string | null
+          subject?: string
+          teacher_code?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      syllabus_settings: {
+        Row: {
+          academic_year_name: string
+          end_month: number
+          id: number
+          start_month: number
+          updated_at: string
+        }
+        Insert: {
+          academic_year_name?: string
+          end_month?: number
+          id?: number
+          start_month?: number
+          updated_at?: string
+        }
+        Update: {
+          academic_year_name?: string
+          end_month?: number
+          id?: number
+          start_month?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      syllabus_status: {
+        Row: {
+          academic_year: string
+          class_id: string
+          created_at: string
+          id: string
+          month: number
+          status: string
+          subject: string
+          teacher_code: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          academic_year: string
+          class_id: string
+          created_at?: string
+          id?: string
+          month: number
+          status?: string
+          subject: string
+          teacher_code: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          academic_year?: string
+          class_id?: string
+          created_at?: string
+          id?: string
+          month?: number
+          status?: string
+          subject?: string
+          teacher_code?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
