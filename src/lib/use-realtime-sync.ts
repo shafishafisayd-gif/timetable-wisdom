@@ -34,27 +34,6 @@ export function useRealtimeSync() {
           qc.invalidateQueries({ queryKey: ["student"] });
         },
       )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "syllabus_status" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["syllabus_status"] });
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "syllabus_history" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["syllabus_history"] });
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "syllabus_settings" },
-        () => {
-          qc.invalidateQueries({ queryKey: ["syllabus_settings"] });
-        },
-      )
       .subscribe();
 
     return () => {

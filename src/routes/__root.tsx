@@ -9,7 +9,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { Home, CalendarDays, GraduationCap, BarChart3, Trophy, BookOpen } from "lucide-react";
+import { Home, CalendarDays, GraduationCap, BarChart3, Trophy } from "lucide-react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -129,7 +129,6 @@ const NAV = [
   { to: "/timetable", label: "Overall", icon: CalendarDays, exact: false },
   { to: "/teachers", label: "Teachers", icon: Home, exact: false },
   { to: "/classes", label: "Classes", icon: GraduationCap, exact: false },
-  { to: "/syllabus", label: "Syllabus", icon: BookOpen, exact: false },
   { to: "/rankings", label: "Ranks", icon: Trophy, exact: false },
   { to: "/stats", label: "Stats", icon: BarChart3, exact: false },
 ] as const;
@@ -138,7 +137,7 @@ function BottomNav() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto grid max-w-3xl grid-cols-6">
+      <div className="mx-auto grid max-w-3xl grid-cols-5">
 
         {NAV.map((item) => {
           const active = item.exact ? path === item.to : path.startsWith(item.to);

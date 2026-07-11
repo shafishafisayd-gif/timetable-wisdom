@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimetableRouteImport } from './routes/timetable'
-import { Route as SyllabusRouteImport } from './routes/syllabus'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as RankingsRouteImport } from './routes/rankings'
 import { Route as AttentionRouteImport } from './routes/attention'
@@ -25,11 +24,6 @@ import { Route as SessionClassSubjectRouteImport } from './routes/session.$class
 const TimetableRoute = TimetableRouteImport.update({
   id: '/timetable',
   path: '/timetable',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SyllabusRoute = SyllabusRouteImport.update({
-  id: '/syllabus',
-  path: '/syllabus',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StatsRoute = StatsRouteImport.update({
@@ -88,7 +82,6 @@ export interface FileRoutesByFullPath {
   '/attention': typeof AttentionRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
-  '/syllabus': typeof SyllabusRoute
   '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
@@ -102,7 +95,6 @@ export interface FileRoutesByTo {
   '/attention': typeof AttentionRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
-  '/syllabus': typeof SyllabusRoute
   '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
@@ -117,7 +109,6 @@ export interface FileRoutesById {
   '/attention': typeof AttentionRoute
   '/rankings': typeof RankingsRoute
   '/stats': typeof StatsRoute
-  '/syllabus': typeof SyllabusRoute
   '/timetable': typeof TimetableRoute
   '/classes/$id': typeof ClassesIdRoute
   '/students/$id': typeof StudentsIdRoute
@@ -133,7 +124,6 @@ export interface FileRouteTypes {
     | '/attention'
     | '/rankings'
     | '/stats'
-    | '/syllabus'
     | '/timetable'
     | '/classes/$id'
     | '/students/$id'
@@ -147,7 +137,6 @@ export interface FileRouteTypes {
     | '/attention'
     | '/rankings'
     | '/stats'
-    | '/syllabus'
     | '/timetable'
     | '/classes/$id'
     | '/students/$id'
@@ -161,7 +150,6 @@ export interface FileRouteTypes {
     | '/attention'
     | '/rankings'
     | '/stats'
-    | '/syllabus'
     | '/timetable'
     | '/classes/$id'
     | '/students/$id'
@@ -176,7 +164,6 @@ export interface RootRouteChildren {
   AttentionRoute: typeof AttentionRoute
   RankingsRoute: typeof RankingsRoute
   StatsRoute: typeof StatsRoute
-  SyllabusRoute: typeof SyllabusRoute
   TimetableRoute: typeof TimetableRoute
   ClassesIdRoute: typeof ClassesIdRoute
   StudentsIdRoute: typeof StudentsIdRoute
@@ -193,13 +180,6 @@ declare module '@tanstack/react-router' {
       path: '/timetable'
       fullPath: '/timetable'
       preLoaderRoute: typeof TimetableRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/syllabus': {
-      id: '/syllabus'
-      path: '/syllabus'
-      fullPath: '/syllabus'
-      preLoaderRoute: typeof SyllabusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stats': {
@@ -280,7 +260,6 @@ const rootRouteChildren: RootRouteChildren = {
   AttentionRoute: AttentionRoute,
   RankingsRoute: RankingsRoute,
   StatsRoute: StatsRoute,
-  SyllabusRoute: SyllabusRoute,
   TimetableRoute: TimetableRoute,
   ClassesIdRoute: ClassesIdRoute,
   StudentsIdRoute: StudentsIdRoute,
