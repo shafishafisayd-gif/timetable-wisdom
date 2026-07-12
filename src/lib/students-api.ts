@@ -209,10 +209,12 @@ export function computeStudentStats(evals: Evaluation[]): StudentStats {
     totalAsked: 0,
     averageMark: 0,
     performanceScore: 0,
+    totalPoints: 0,
     attendance: 0,
   };
   let markSum = 0;
   let markCount = 0;
+  let pointsSum = 0;
   for (const e of evals) {
     s.totalAsked++;
     if (e.status === "answered") {
