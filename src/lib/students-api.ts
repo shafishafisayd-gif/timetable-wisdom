@@ -39,7 +39,8 @@ export interface StudentStats {
   absent: number;
   totalAsked: number;
   averageMark: number;
-  performanceScore: number; // 0..10
+  performanceScore: number; // 0..10 (legacy)
+  totalPoints: number; // sum of all mark values (primary ranking metric)
   attendance: number; // answered + not_answered
 }
 
