@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Clock, BookOpen, Coffee, Maximize2, Download, Printer, Loader2, LayoutGrid } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Clock, BookOpen, Coffee, Maximize2, Download, Printer, Loader2, LayoutGrid, ChevronRight, CheckCircle2, CircleDashed, PlayCircle, History as HistoryIcon, FileText } from "lucide-react";
 
 import { BREAKS } from "@/data/timetable";
 import {
