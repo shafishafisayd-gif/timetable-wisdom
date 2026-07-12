@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, Settings2, X } from "lucide-react";
 import {
   TEACHERS,
   getTeacherStats,
@@ -16,6 +17,16 @@ import {
   type ClassId,
   type Teacher,
 } from "@/data/timetable";
+import {
+  buildAcademicMonths,
+  fetchSyllabusSettings,
+  fetchSyllabusStatus,
+  getTeacherClassSubjects,
+  MONTH_LONG,
+  MONTH_NAMES,
+  summarize,
+  updateSyllabusSettings,
+} from "@/lib/syllabus-api";
 
 export const Route = createFileRoute("/stats")({
   head: () => ({ meta: [{ title: "Stats · Malja'a Timetable" }] }),
