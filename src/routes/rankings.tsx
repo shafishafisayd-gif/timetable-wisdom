@@ -48,7 +48,7 @@ function RankingsPage() {
     }
     const students = studentsQ.data ?? [];
     const map = new Map<string, Student>(students.map((s) => [s.id, s]));
-    const rows: { student: Student; score: number; asked: number; answered: number; avg: number }[] = [];
+    const rows: { student: Student; points: number; asked: number; answered: number; avg: number }[] = [];
     for (const [sid, list] of byStudent) {
       const st = map.get(sid);
       if (!st) continue;
@@ -56,13 +56,14 @@ function RankingsPage() {
       if (stats.totalAsked === 0) continue;
       rows.push({
         student: st,
-        score: stats.performanceScore,
+        points: stats.totalPoints,
         asked: stats.totalAsked,
         answered: stats.answered,
         avg: stats.averageMark,
       });
     }
-    rows.sort((a, b) => b.score - a.score);
+    // Total points is the primary metric; average mark breaks ties.
+    rows.sort((a, b) => b.points - a.points || b.avg - a.avg);
     return rows;
   }, [filteredEvals, studentsQ.data]);
 
