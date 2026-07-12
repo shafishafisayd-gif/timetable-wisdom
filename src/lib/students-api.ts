@@ -39,7 +39,8 @@ export interface StudentStats {
   absent: number;
   totalAsked: number;
   averageMark: number;
-  performanceScore: number; // 0..10
+  performanceScore: number; // 0..10 (legacy)
+  totalPoints: number; // sum of all mark values (primary ranking metric)
   attendance: number; // answered + not_answered
 }
 
@@ -208,24 +209,27 @@ export function computeStudentStats(evals: Evaluation[]): StudentStats {
     totalAsked: 0,
     averageMark: 0,
     performanceScore: 0,
+    totalPoints: 0,
     attendance: 0,
   };
   let markSum = 0;
   let markCount = 0;
+  let pointsSum = 0;
   for (const e of evals) {
     s.totalAsked++;
     if (e.status === "answered") {
       s.answered++;
-      if (typeof e.mark === "number") { markSum += e.mark; markCount++; }
+      if (typeof e.mark === "number") { markSum += e.mark; markCount++; pointsSum += e.mark; }
     } else if (e.status === "not_answered") {
       s.notAnswered++;
+      if (typeof e.mark === "number") pointsSum += e.mark; // minus is stored as negative
     } else if (e.status === "absent") {
       s.absent++;
     }
   }
   s.attendance = s.answered + s.notAnswered;
   s.averageMark = markCount > 0 ? markSum / markCount : 0;
-  // Performance score: avg mark, but not-answered pulls it down slightly.
+  s.totalPoints = pointsSum;
   const denom = s.answered + s.notAnswered;
   s.performanceScore = denom > 0 ? (markSum + s.notAnswered * -1) / denom : 0;
   return s;

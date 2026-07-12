@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown, Settings2, X } from "lucide-react";
 import {
   TEACHERS,
   getTeacherStats,
@@ -16,6 +17,16 @@ import {
   type ClassId,
   type Teacher,
 } from "@/data/timetable";
+import {
+  buildAcademicMonths,
+  fetchSyllabusSettings,
+  fetchSyllabusStatus,
+  getTeacherClassSubjects,
+  MONTH_LONG,
+  MONTH_NAMES,
+  summarize,
+  updateSyllabusSettings,
+} from "@/lib/syllabus-api";
 
 export const Route = createFileRoute("/stats")({
   head: () => ({ meta: [{ title: "Stats · Malja'a Timetable" }] }),
@@ -125,11 +136,167 @@ function Stats() {
         </div>
       </div>
 
+      <SyllabusAnalytics />
+
       <div className="space-y-3">
         <h3 className="px-1 text-sm font-semibold text-foreground">Class-wise Subject Assignments</h3>
         {sorted.map((t) => (
           <TeacherDetail key={t.code} teacher={t} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+function SyllabusAnalytics() {
+  const settingsQ = useQuery({ queryKey: ["syllabus_settings"], queryFn: fetchSyllabusSettings });
+  const statusQ = useQuery({
+    queryKey: ["syllabus_status", "all", settingsQ.data?.academic_year_name],
+    enabled: !!settingsQ.data,
+    queryFn: () => fetchSyllabusStatus({ academicYear: settingsQ.data!.academic_year_name }),
+  });
+  const [showSettings, setShowSettings] = useState(false);
+
+  const teacherRows = useMemo(() => {
+    if (!settingsQ.data) return [];
+    const statuses = statusQ.data ?? [];
+    return TEACHERS.map((t) => {
+      const pairs = getTeacherClassSubjects(t.code);
+      const sum = summarize(statuses.filter((s) => s.teacher_code === t.code), pairs);
+      return { teacher: t, ...sum };
+    }).sort((a, b) => b.percent - a.percent);
+  }, [statusQ.data, settingsQ.data]);
+
+  const overall = useMemo(() => {
+    let total = 0, completed = 0;
+    for (const r of teacherRows) { total += r.total; completed += r.completed; }
+    return { total, completed, percent: total ? Math.round((completed / total) * 100) : 0 };
+  }, [teacherRows]);
+
+  if (!settingsQ.data) return null;
+  const settings = settingsQ.data;
+
+  return (
+    <div className="card-soft p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Syllabus Analytics</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            AY {settings.academic_year_name} · {MONTH_LONG[settings.start_month - 1]} → {MONTH_LONG[settings.end_month - 1]}
+          </p>
+        </div>
+        <button
+          onClick={() => setShowSettings(true)}
+          className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground hover:bg-secondary/80"
+        >
+          <Settings2 className="h-3.5 w-3.5" /> Settings
+        </button>
+      </div>
+
+      <div className="mt-3">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">Overall college progress</span>
+          <span className="font-semibold text-foreground">{overall.completed}/{overall.total} ({overall.percent}%)</span>
+        </div>
+        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${overall.percent}%` }} />
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        {teacherRows.map((r) => (
+          <div key={r.teacher.code}>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: r.teacher.color }} />
+                <span className="font-semibold text-foreground">{r.teacher.fullName}</span>
+              </div>
+              <span className="font-mono text-muted-foreground">{r.completed}/{r.total} · {r.percent}%</span>
+            </div>
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
+              <div className="h-full rounded-full" style={{ width: `${r.percent}%`, backgroundColor: r.teacher.color }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {showSettings && <SettingsDialog onClose={() => setShowSettings(false)} settings={settings} />}
+    </div>
+  );
+}
+
+function SettingsDialog({
+  settings,
+  onClose,
+}: {
+  settings: { academic_year_name: string; start_month: number; end_month: number };
+  onClose: () => void;
+}) {
+  const qc = useQueryClient();
+  const [name, setName] = useState(settings.academic_year_name);
+  const [start, setStart] = useState(settings.start_month);
+  const [end, setEnd] = useState(settings.end_month);
+  const mutation = useMutation({
+    mutationFn: () => updateSyllabusSettings({ academic_year_name: name, start_month: start, end_month: end }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["syllabus_settings"] });
+      qc.invalidateQueries({ queryKey: ["syllabus_status"] });
+      onClose();
+    },
+  });
+
+  const months = buildAcademicMonths(start, end);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-sm rounded-2xl bg-card p-5 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-bold text-foreground">Academic Year Settings</h3>
+          <button onClick={onClose} className="rounded-lg p-1 text-muted-foreground hover:bg-secondary">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="mt-4 space-y-3">
+          <label className="block text-xs font-semibold text-muted-foreground">
+            Academic Year
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="2026-2027"
+              className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm text-foreground"
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block text-xs font-semibold text-muted-foreground">
+              Start Month
+              <select value={start} onChange={(e) => setStart(Number(e.target.value))} className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm text-foreground">
+                {MONTH_NAMES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+              </select>
+            </label>
+            <label className="block text-xs font-semibold text-muted-foreground">
+              End Month
+              <select value={end} onChange={(e) => setEnd(Number(e.target.value))} className="mt-1 w-full rounded-lg bg-secondary px-3 py-2 text-sm text-foreground">
+                {MONTH_NAMES.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+              </select>
+            </label>
+          </div>
+          <div className="rounded-lg bg-secondary/40 p-2 text-[11px] text-muted-foreground">
+            Preview ({months.length} months): {months.map((m) => m.monthName).join(" → ")}
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-lg bg-secondary px-3 py-2 text-sm font-semibold">Cancel</button>
+          <button
+            disabled={mutation.isPending || !name.trim()}
+            onClick={() => mutation.mutate()}
+            className="flex-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {mutation.isPending ? "Saving…" : "Save"}
+          </button>
+        </div>
       </div>
     </div>
   );
