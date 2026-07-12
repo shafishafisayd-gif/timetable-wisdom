@@ -63,7 +63,7 @@ export const Route = createFileRoute("/teachers/$code")({
   ),
 });
 
-type Tab = "overview" | "today" | "weekly" | "syllabus";
+type Tab = "overview" | "today" | "weekly" | "syllabus" | "syllabus_pdf";
 
 function TeacherPage() {
   const { code } = Route.useParams();
