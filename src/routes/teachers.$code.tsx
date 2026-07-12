@@ -308,7 +308,8 @@ function TeacherPage() {
       </section>
       )}
 
-      {tab === "syllabus" && <SyllabusViewer teacher={teacher} />}
+      {tab === "syllabus" && <SyllabusTracker teacher={teacher} />}
+      {tab === "syllabus_pdf" && <SyllabusViewer teacher={teacher} />}
     </div>
   );
 }
@@ -318,7 +319,8 @@ function TabBar({ tab, setTab, hasSyllabus }: { tab: Tab; setTab: (t: Tab) => vo
     { id: "overview", label: "Overview" },
     { id: "today", label: "Today" },
     { id: "weekly", label: "Weekly" },
-    ...(hasSyllabus ? [{ id: "syllabus" as Tab, label: "Monthly Syllabus" }] : []),
+    { id: "syllabus", label: "Syllabus" },
+    ...(hasSyllabus ? [{ id: "syllabus_pdf" as Tab, label: "Syllabus PDF" }] : []),
   ];
   return (
     <div className="card-soft -mx-1 flex gap-1.5 overflow-x-auto p-1.5 hide-scrollbar">
@@ -336,6 +338,252 @@ function TabBar({ tab, setTab, hasSyllabus }: { tab: Tab; setTab: (t: Tab) => vo
         </button>
       ))}
     </div>
+  );
+}
+
+function SyllabusTracker({ teacher }: { teacher: Teacher }) {
+  const qc = useQueryClient();
+  const settingsQ = useQuery({ queryKey: ["syllabus_settings"], queryFn: fetchSyllabusSettings });
+  const statusQ = useQuery({
+    queryKey: ["syllabus_status", teacher.code, settingsQ.data?.academic_year_name],
+    enabled: !!settingsQ.data,
+    queryFn: () =>
+      fetchSyllabusStatus({
+        teacherCode: teacher.code,
+        academicYear: settingsQ.data!.academic_year_name,
+      }),
+  });
+  const historyQ = useQuery({
+    queryKey: ["syllabus_history", teacher.code, settingsQ.data?.academic_year_name],
+    enabled: !!settingsQ.data,
+    queryFn: () =>
+      fetchSyllabusHistory({
+        teacherCode: teacher.code,
+        academicYear: settingsQ.data!.academic_year_name,
+        limit: 30,
+      }),
+  });
+
+  const pairs = useMemo(() => getTeacherClassSubjects(teacher.code), [teacher.code]);
+  const months = useMemo(
+    () =>
+      settingsQ.data
+        ? buildAcademicMonths(settingsQ.data.start_month, settingsQ.data.end_month)
+        : [],
+    [settingsQ.data],
+  );
+
+  const [openMonth, setOpenMonth] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: (input: {
+      class_id: string;
+      subject: string;
+      month: number;
+      status: SyllabusStatusValue;
+    }) =>
+      setSyllabusStatus({
+        class_id: input.class_id,
+        subject: input.subject,
+        teacher_code: teacher.code,
+        month: input.month,
+        academic_year: settingsQ.data!.academic_year_name,
+        status: input.status,
+        updated_by: teacher.code,
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["syllabus_status"] });
+      qc.invalidateQueries({ queryKey: ["syllabus_history"] });
+    },
+  });
+
+  if (settingsQ.isLoading || !settingsQ.data) {
+    return (
+      <div className="card-soft flex h-40 items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const statuses = statusQ.data ?? [];
+  const overall = summarize(statuses, pairs);
+  const settings = settingsQ.data;
+
+  return (
+    <div className="space-y-3">
+      <div className="card-soft p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Syllabus Progress</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Academic Year <span className="font-semibold text-foreground">{settings.academic_year_name}</span>
+              {" · "}
+              {MONTH_LONG[settings.start_month - 1]} → {MONTH_LONG[settings.end_month - 1]}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHistory((v) => !v)}
+              className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground hover:bg-secondary/80"
+            >
+              <HistoryIcon className="h-3.5 w-3.5" /> History
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Overall completion</span>
+            <span className="font-semibold text-foreground">
+              {overall.completed}/{overall.total} ({overall.percent}%)
+            </span>
+          </div>
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${overall.percent}%`, backgroundColor: teacher.color }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {showHistory && (
+        <div className="card-soft p-3">
+          <h4 className="mb-2 text-xs font-semibold text-foreground">Recent Updates</h4>
+          {historyQ.data && historyQ.data.length > 0 ? (
+            <ul className="space-y-1.5">
+              {historyQ.data.map((h) => (
+                <li key={h.id} className="rounded-lg bg-secondary/40 px-2.5 py-2 text-[11px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-semibold text-foreground">
+                      {h.class_id} · {h.subject}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {new Date(h.changed_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 text-muted-foreground">
+                    {MONTH_LONG[h.month - 1]} · {h.previous_status ?? "—"} → <span className="font-semibold text-foreground">{h.new_status}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-4 text-center text-xs text-muted-foreground">No history yet.</p>
+          )}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {months.map((m) => {
+          const monthStatuses = statuses.filter((s) => s.month === m.month);
+          const sum = summarize(monthStatuses, pairs);
+          const isOpen = openMonth === m.month;
+          return (
+            <div key={m.month} className="card-soft overflow-hidden">
+              <button
+                onClick={() => setOpenMonth(isOpen ? null : m.month)}
+                className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-secondary/40"
+              >
+                <div
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-[11px] font-bold uppercase"
+                  style={{ backgroundColor: teacher.color, color: textOn(teacher.color) }}
+                >
+                  {m.monthName}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-foreground">{m.monthLong}</div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div className="h-full rounded-full" style={{ width: `${sum.percent}%`, backgroundColor: teacher.color }} />
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-sm font-bold text-foreground">{sum.percent}%</div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {sum.completed}/{sum.total} done
+                  </div>
+                </div>
+                <ChevronRight className={`h-4 w-4 shrink-0 text-muted-foreground transition ${isOpen ? "rotate-90" : ""}`} />
+              </button>
+              {isOpen && (
+                <div className="border-t border-border bg-secondary/20 p-3">
+                  {pairs.length === 0 ? (
+                    <p className="py-4 text-center text-xs text-muted-foreground">No class-subject assignments.</p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {pairs.map((p) => {
+                        const rowStatus =
+                          (monthStatuses.find((s) => s.class_id === p.className && s.subject === p.subject)?.status ??
+                            "not_started") as SyllabusStatusValue;
+                        return (
+                          <li key={`${p.className}|${p.subject}`} className="rounded-xl bg-card p-2.5">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="rounded-md px-2 py-0.5 text-[11px] font-bold"
+                                style={{ backgroundColor: teacher.color, color: textOn(teacher.color) }}
+                              >
+                                {p.className}
+                              </span>
+                              <span className="min-w-0 flex-1 truncate text-xs font-semibold text-foreground">{p.subject}</span>
+                              <StatusPill status={rowStatus} />
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {(["not_started", "in_progress", "completed"] as SyllabusStatusValue[]).map((s) => (
+                                <button
+                                  key={s}
+                                  disabled={mutation.isPending || rowStatus === s}
+                                  onClick={() =>
+                                    mutation.mutate({
+                                      class_id: p.className,
+                                      subject: p.subject,
+                                      month: m.month,
+                                      status: s,
+                                    })
+                                  }
+                                  className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-semibold transition ${
+                                    rowStatus === s
+                                      ? "bg-primary text-primary-foreground"
+                                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                                  } disabled:opacity-60`}
+                                >
+                                  {s === "not_started" ? <CircleDashed className="h-3 w-3" /> : s === "in_progress" ? <PlayCircle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}
+                                  {statusLabel(s)}
+                                </button>
+                              ))}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function statusLabel(s: SyllabusStatusValue) {
+  if (s === "not_started") return "Not Started";
+  if (s === "in_progress") return "In Progress";
+  return "Completed";
+}
+
+function StatusPill({ status }: { status: SyllabusStatusValue }) {
+  const cls =
+    status === "completed"
+      ? "bg-green-500/15 text-green-700"
+      : status === "in_progress"
+        ? "bg-amber-500/15 text-amber-700"
+        : "bg-secondary text-muted-foreground";
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${cls}`}>
+      {statusLabel(status)}
+    </span>
   );
 }
 
