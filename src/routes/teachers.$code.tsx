@@ -26,6 +26,17 @@ import {
 import { useNow } from "@/lib/use-now";
 import { AskQuestionCard } from "@/components/AskQuestionCard";
 import { setPreferredTeacher } from "@/lib/preferred-teacher";
+import {
+  buildAcademicMonths,
+  fetchSyllabusHistory,
+  fetchSyllabusSettings,
+  fetchSyllabusStatus,
+  getTeacherClassSubjects,
+  MONTH_LONG,
+  setSyllabusStatus,
+  summarize,
+  type SyllabusStatusValue,
+} from "@/lib/syllabus-api";
 
 
 export const Route = createFileRoute("/teachers/$code")({
