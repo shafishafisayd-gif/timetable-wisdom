@@ -155,8 +155,8 @@ function RankingsPage() {
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="text-lg font-bold text-foreground">{r.score.toFixed(1)}</div>
-                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Score</div>
+                    <div className="text-lg font-bold text-foreground">{r.points}</div>
+                    <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Points</div>
                   </div>
                 </Link>
               </li>
