@@ -189,11 +189,14 @@ export async function insertRoundPick(pick: Omit<RoundPick, "id" | "picked_at">)
   return data as RoundPick;
 }
 
-export async function insertEvaluation(evalRow: Omit<Evaluation, "id" | "created_at">) {
+export async function insertEvaluation(
+  evalRow: Omit<Evaluation, "id" | "created_at" | "eval_date"> & { eval_date?: string },
+) {
   const { data, error } = await supabase.from("evaluations").insert(evalRow).select().single();
   if (error) throw error;
   return data as Evaluation;
 }
+
 
 export async function updateEvaluation(
   id: string,
