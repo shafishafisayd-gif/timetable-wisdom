@@ -123,10 +123,10 @@ export async function fetchTodayEvaluations(
 
 
 /**
- * Fetch today's picks for a teacher+class+subject. Rounds are scoped per day:
- * yesterday's picks never affect today's eligibility.
+ * Fetch all round picks for a teacher/class/subject across every round.
+ * Rounds are persistent — they never reset with the day. Kept for history views.
  */
-export async function fetchTodayRoundPicks(
+export async function fetchAllRoundPicks(
   teacherCode: string,
   classId: string,
   subject: string,
@@ -137,33 +137,22 @@ export async function fetchTodayRoundPicks(
     .eq("teacher_code", teacherCode)
     .eq("class_id", classId)
     .eq("subject", subject)
-    .gte("picked_at", todayStartIso())
     .order("picked_at", { ascending: true });
   if (error) throw error;
   return (data ?? []) as RoundPick[];
 }
 
 /**
- * Reset today's random-selection cycle. Only deletes today's round_picks
- * — evaluations, marks, minus, absent records and rankings are untouched.
+ * Compute the effective current round state for a teacher/class/subject.
+ * Rounds are per teacher-class-subject and NOT scoped to the day — the
+ * system remembers exactly which students have already been asked in the
+ * current round and which are still waiting.
+ *
+ * When every student in the class has been picked in the current round,
+ * the round is considered complete and the next call surfaces it as
+ * "round complete" (empty picks for roundNo + 1).
  */
-export async function resetTodayRound(
-  teacherCode: string,
-  classId: string,
-  subject: string,
-): Promise<void> {
-  const { error } = await supabase
-    .from("round_picks")
-    .delete()
-    .eq("teacher_code", teacherCode)
-    .eq("class_id", classId)
-    .eq("subject", subject)
-    .gte("picked_at", todayStartIso());
-  if (error) throw error;
-}
-
-// Returns effective current round: max existing + 1 if that round is complete relative to student count.
-export async function fetchEffectiveRound(
+export async function fetchRoundState(
   teacherCode: string,
   classId: string,
   subject: string,
@@ -176,6 +165,22 @@ export async function fetchEffectiveRound(
   }
   return { roundNo: maxRound, picks };
 }
+
+/**
+ * Start a new round explicitly — used by the "Start New Round" button after
+ * a round is completed. This does not touch evaluations, marks, minus,
+ * absences, or statistics — only the selection order is reset.
+ * Returns the new round number to insert future picks under.
+ */
+export async function startNewRound(
+  teacherCode: string,
+  classId: string,
+  subject: string,
+): Promise<number> {
+  const maxRound = await fetchCurrentRoundNo(teacherCode, classId, subject);
+  return maxRound + 1;
+}
+
 
 
 export async function insertRoundPick(pick: Omit<RoundPick, "id" | "picked_at">) {
