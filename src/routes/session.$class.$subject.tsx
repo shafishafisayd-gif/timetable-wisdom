@@ -10,20 +10,18 @@ import {
   DAY_LABELS,
   textOn,
   type ClassId,
-
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
 import {
   fetchStudents,
-  fetchTodayRoundPicks,
-  fetchTodayEvaluations,
-  resetTodayRound,
+  fetchRoundState,
+  fetchEvaluations,
+  startNewRound as apiStartNewRound,
   insertRoundPick,
   insertEvaluation,
   type Student,
-  type RoundPick,
-  type Evaluation,
 } from "@/lib/students-api";
+import { fetchSyllabusSettings } from "@/lib/syllabus-api";
 
 const searchSchema = z.object({
   teacher: z.string(),
@@ -56,21 +54,33 @@ function SessionPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
 
+  const settingsQ = useQuery({ queryKey: ["syllabus_settings"], queryFn: fetchSyllabusSettings });
+  const academicYear = settingsQ.data?.academic_year_name ?? null;
+
   const studentsQ = useQuery({
     queryKey: ["students", classId],
     queryFn: () => fetchStudents(classId),
   });
-  const picksQ = useQuery({
-    queryKey: ["daily_round_picks", teacherCode, classId, subject, new Date().toDateString()],
-    queryFn: () => fetchTodayRoundPicks(teacherCode, classId, subject),
-  });
-  const evalsQ = useQuery({
-    queryKey: ["today_evaluations", teacherCode, classId, subject, new Date().toDateString()],
-    queryFn: () => fetchTodayEvaluations(teacherCode, classId, subject),
-  });
-
   const students = studentsQ.data ?? [];
-  const picks = picksQ.data ?? [];
+
+  // Persistent round state — per teacher/class/subject, remembers previous position.
+  const roundStateQ = useQuery({
+    queryKey: ["round_state", teacherCode, classId, subject, students.length],
+    enabled: !studentsQ.isLoading,
+    queryFn: () => fetchRoundState(teacherCode, classId, subject, students.length),
+  });
+  const roundNo = roundStateQ.data?.roundNo ?? 1;
+  const picks = roundStateQ.data?.picks ?? [];
+
+  // Evaluations for this specific round → determines "asked but unresolved".
+  const evalsQ = useQuery({
+    queryKey: ["evaluations", "round", teacherCode, classId, subject, roundNo],
+    enabled: !!roundStateQ.data,
+    queryFn: () =>
+      fetchEvaluations({ teacherCode, classId, subject }).then((rows) =>
+        rows.filter((e) => e.round_no === roundNo),
+      ),
+  });
   const evals = evalsQ.data ?? [];
 
   const evaluatedIds = useMemo(() => new Set(evals.map((e) => e.student_id)), [evals]);
@@ -78,18 +88,13 @@ function SessionPage() {
     () => picks.filter((p) => !evaluatedIds.has(p.student_id)),
     [picks, evaluatedIds],
   );
-  // The locked "active" pick — the most recent unresolved pick today.
   const activePickId = openPicks.length > 0 ? openPicks[openPicks.length - 1].student_id : null;
   const activeStudent = useMemo(
     () => students.find((s) => s.id === activePickId) ?? null,
     [students, activePickId],
   );
 
-  const askedIds = useMemo(() => {
-    const set = new Set<string>();
-    picks.forEach((p) => set.add(p.student_id));
-    return set;
-  }, [picks]);
+  const askedIds = useMemo(() => new Set(picks.map((p) => p.student_id)), [picks]);
   const remaining = useMemo(
     () => students.filter((s) => !askedIds.has(s.id)),
     [students, askedIds],
@@ -100,16 +105,16 @@ function SessionPage() {
   const [showMarks, setShowMarks] = useState(false);
   const [showMinus, setShowMinus] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
-  const autoPickRef = useRef(false);
+  const autoPickRef = useRef<string | null>(null);
 
   const invalidate = useCallback(() => {
-    qc.invalidateQueries({ queryKey: ["daily_round_picks", teacherCode, classId, subject] });
-    qc.invalidateQueries({ queryKey: ["today_evaluations", teacherCode, classId, subject] });
+    qc.invalidateQueries({ queryKey: ["round_state", teacherCode, classId, subject] });
     qc.invalidateQueries({ queryKey: ["evaluations"] });
+    qc.invalidateQueries({ queryKey: ["daily_round_picks"] });
   }, [qc, teacherCode, classId, subject]);
 
   const pickFromPool = useCallback(
-    async (pool: Student[]) => {
+    async (pool: Student[], targetRound: number) => {
       if (pool.length === 0) return null;
       const chosen = pool[Math.floor(Math.random() * pool.length)];
       await insertRoundPick({
@@ -117,49 +122,65 @@ function SessionPage() {
         class_id: classId,
         subject,
         student_id: chosen.id,
-        round_no: 1,
+        round_no: targetRound,
       });
       return chosen;
     },
     [teacherCode, classId, subject],
   );
 
-  // On first load with no active locked pick and remaining students, auto-pick.
+  // Auto-pick when there is no active locked student and remaining students exist in this round.
   useEffect(() => {
-    if (autoPickRef.current) return;
-    if (studentsQ.isLoading || picksQ.isLoading || evalsQ.isLoading) return;
-    if (activePickId) { autoPickRef.current = true; return; }
+    const guardKey = `${roundNo}:${activePickId ?? ""}:${remaining.length}`;
+    if (autoPickRef.current === guardKey) return;
+    if (studentsQ.isLoading || roundStateQ.isLoading || evalsQ.isLoading) return;
+    if (activePickId) { autoPickRef.current = guardKey; return; }
     if (remaining.length === 0) return;
-    autoPickRef.current = true;
+    autoPickRef.current = guardKey;
     (async () => {
       setBusy(true);
       try {
-        await pickFromPool(remaining);
+        await pickFromPool(remaining, roundNo);
         invalidate();
       } finally { setBusy(false); }
     })();
-  }, [studentsQ.isLoading, picksQ.isLoading, evalsQ.isLoading, activePickId, remaining, pickFromPool, invalidate]);
+  }, [studentsQ.isLoading, roundStateQ.isLoading, evalsQ.isLoading, activePickId, remaining, roundNo, pickFromPool, invalidate]);
 
   const startNewRound = async () => {
     if (busy) return;
     setBusy(true);
     try {
-      await resetTodayRound(teacherCode, classId, subject);
-      autoPickRef.current = false;
+      const nextRound = await apiStartNewRound(teacherCode, classId, subject);
+      await pickFromPool(students, nextRound);
+      autoPickRef.current = null;
       invalidate();
-      setFlash("New round started");
+      setFlash(`Round ${nextRound} started`);
       setTimeout(() => setFlash(null), 1800);
     } finally { setBusy(false); }
   };
 
+  const commonEvalPayload = () => ({
+    teacher_code: teacherCode,
+    class_id: classId,
+    subject,
+    day: day!,
+    period,
+    academic_year: academicYear,
+    round_no: roundNo,
+  });
+
   const afterEvaluate = async (msg: string) => {
     setShowMarks(false);
     setShowMinus(false);
-    // Auto-pick next.
     const stillRemaining = remaining.filter((s) => s.id !== activePickId);
-    const next = await pickFromPool(stillRemaining);
-    invalidate();
-    setFlash(next ? `${msg} · Next: ${next.name.split(" ")[0]}` : `${msg} · round complete`);
+    if (stillRemaining.length > 0) {
+      const next = await pickFromPool(stillRemaining, roundNo);
+      invalidate();
+      setFlash(next ? `${msg} · Next: ${next.name.split(" ")[0]}` : msg);
+    } else {
+      invalidate();
+      setFlash(`${msg} · Round ${roundNo} complete 🎉`);
+    }
     setTimeout(() => setFlash(null), 2500);
   };
 
@@ -169,13 +190,9 @@ function SessionPage() {
     try {
       await insertEvaluation({
         student_id: activeStudent.id,
-        teacher_code: teacherCode,
-        class_id: classId,
-        subject,
-        day: day!,
-        period,
         status: "answered",
         mark,
+        ...commonEvalPayload(),
       });
       await afterEvaluate(`${activeStudent.name.split(" ")[0]}: ${mark}/5`);
     } finally { setBusy(false); }
@@ -187,13 +204,9 @@ function SessionPage() {
     try {
       await insertEvaluation({
         student_id: activeStudent.id,
-        teacher_code: teacherCode,
-        class_id: classId,
-        subject,
-        day: day!,
-        period,
         status: "not_answered",
-        mark: minus, // negative or zero
+        mark: minus,
+        ...commonEvalPayload(),
       });
       await afterEvaluate(`${activeStudent.name.split(" ")[0]}: ${minus}`);
     } finally { setBusy(false); }
@@ -205,13 +218,9 @@ function SessionPage() {
     try {
       await insertEvaluation({
         student_id: activeStudent.id,
-        teacher_code: teacherCode,
-        class_id: classId,
-        subject,
-        day: day!,
-        period,
         status: "absent",
         mark: null,
+        ...commonEvalPayload(),
       });
       await afterEvaluate(`${activeStudent.name.split(" ")[0]} marked absent`);
     } finally { setBusy(false); }
@@ -222,8 +231,7 @@ function SessionPage() {
   }
 
   const fg = textOn(teacher.color);
-  const askedCount = askedIds.size;
-  const roundNo = 1; // daily round; historical rounds preserved separately
+  const askedCount = picks.length;
 
   return (
     <div className="space-y-4">
@@ -233,14 +241,6 @@ function SessionPage() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Back to teacher
-        </button>
-        <button
-          onClick={startNewRound}
-          disabled={busy || askedCount === 0}
-          className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground transition hover:bg-secondary/80 disabled:opacity-40"
-          title="Reset today's random selection — marks and history are kept"
-        >
-          <RotateCcw className="h-3 w-3" /> Reset Round
         </button>
       </div>
 
@@ -259,7 +259,7 @@ function SessionPage() {
             </div>
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">
-            {remaining.length}/{students.length} students remaining · {askedCount} asked today · Round {roundNo}
+            {remaining.length}/{students.length} students remaining · {askedCount} asked this round · Round {roundNo}
           </div>
 
           {flash && (
@@ -369,13 +369,15 @@ function SessionPage() {
 
           {!activeStudent && roundComplete && (
             <div className="mt-4 rounded-2xl border-2 border-dashed border-primary/40 bg-primary/5 p-5 text-center">
-              <div className="text-lg font-bold text-primary">🎉 Today's Round Completed</div>
+              <div className="text-lg font-bold text-primary">🎉 Round {roundNo} Completed</div>
               <div className="mt-1 text-xs text-muted-foreground">
-                Every student in {classId} has been asked in {subject} today.
+                Every student in {classId} has been asked in {subject} this round.
+                <br />Marks, minus, absences and stats are preserved.
               </div>
               <button
                 onClick={startNewRound}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                disabled={busy}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
               >
                 <RotateCcw className="h-4 w-4" /> Start New Round
               </button>

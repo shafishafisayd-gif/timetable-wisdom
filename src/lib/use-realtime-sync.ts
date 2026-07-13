@@ -24,8 +24,10 @@ export function useRealtimeSync() {
         () => {
           qc.invalidateQueries({ queryKey: ["round_picks"] });
           qc.invalidateQueries({ queryKey: ["daily_round_picks"] });
+          qc.invalidateQueries({ queryKey: ["round_state"] });
         },
       )
+
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "students" },

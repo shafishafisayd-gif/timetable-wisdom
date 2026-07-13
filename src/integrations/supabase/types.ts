@@ -16,36 +16,45 @@ export type Database = {
     Tables: {
       evaluations: {
         Row: {
+          academic_year: string | null
           class_id: string
           created_at: string
           day: string
+          eval_date: string
           id: string
           mark: number | null
           period: number
+          round_no: number
           status: string
           student_id: string
           subject: string
           teacher_code: string
         }
         Insert: {
+          academic_year?: string | null
           class_id: string
           created_at?: string
           day: string
+          eval_date?: string
           id?: string
           mark?: number | null
           period: number
+          round_no?: number
           status: string
           student_id: string
           subject: string
           teacher_code: string
         }
         Update: {
+          academic_year?: string | null
           class_id?: string
           created_at?: string
           day?: string
+          eval_date?: string
           id?: string
           mark?: number | null
           period?: number
+          round_no?: number
           status?: string
           student_id?: string
           subject?: string
