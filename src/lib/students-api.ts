@@ -19,6 +19,9 @@ export interface Evaluation {
   period: number;
   status: "answered" | "not_answered" | "absent";
   mark: number | null;
+  academic_year: string | null;
+  round_no: number;
+  eval_date: string;
   created_at: string;
 }
 
@@ -31,6 +34,7 @@ export interface RoundPick {
   round_no: number;
   picked_at: string;
 }
+
 
 export interface StudentStats {
   studentId: string;
