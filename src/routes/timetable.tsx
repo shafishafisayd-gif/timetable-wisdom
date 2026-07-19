@@ -14,6 +14,7 @@ import {
   PERIOD_LABELS,
   type DayCode,
 } from "@/data/timetable";
+import { useNow } from "@/lib/use-now";
 
 export const Route = createFileRoute("/timetable")({
   head: () => ({
@@ -26,7 +27,8 @@ export const Route = createFileRoute("/timetable")({
 });
 
 function OverallTimetable() {
-  const today = jsDayToCode(new Date().getDay()) ?? "SAT";
+  const now = useNow();
+  const today = jsDayToCode(now.getDay()) ?? "SAT";
   const [day, setDay] = useState<DayCode>(today);
 
   const idx = DAYS.indexOf(day);
