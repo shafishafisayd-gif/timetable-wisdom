@@ -394,7 +394,7 @@ function RankCard({ rank, row }: { rank: number; row: RankRow }) {
         {initials(row.student.name)}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold">{row.student.name}</div>
+        <div className="whitespace-normal break-words text-sm font-semibold leading-tight">{row.student.name}</div>
         <div className="truncate text-[11px] text-muted-foreground">
           Class {row.student.class_id} · Adm #{row.student.admission_no} · asked {row.asked} · attend {row.attendance}
         </div>
