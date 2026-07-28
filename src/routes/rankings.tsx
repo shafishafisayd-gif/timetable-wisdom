@@ -456,7 +456,7 @@ function MiniRow({ row, badge, tone = "slate" }: { row: RankRow; badge: string; 
         {initials(row.student.name)}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-xs font-semibold">{row.student.name}</div>
+        <div className="whitespace-normal break-words text-xs font-semibold leading-tight">{row.student.name}</div>
         <div className="truncate text-[10px] text-muted-foreground">
           {row.student.class_id} · #{row.student.admission_no}
         </div>
