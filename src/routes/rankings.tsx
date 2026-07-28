@@ -355,23 +355,27 @@ function PodiumCard({ rank, row }: { rank: number; row: RankRow }) {
     <Link
       to="/students/$id"
       params={{ id: row.student.id }}
-      className={`relative flex flex-col items-center gap-1.5 rounded-2xl border border-border bg-card p-3 text-center shadow-sm transition hover:border-primary/50 ${rank === 1 ? "sm:-translate-y-1" : ""}`}
+      className="relative flex h-full flex-col items-center gap-2 rounded-2xl border border-border bg-card p-3 pt-5 text-center shadow-sm transition hover:border-primary/50"
     >
       <div className={`absolute -top-2 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[10px] font-bold ${tone.chip}`}>#{rank}</div>
-      <div className={`mt-1 grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-br ${tone.bg} text-white ring-2 ${tone.ring}`}>
+      <div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${tone.bg} text-white ring-2 ${tone.ring}`}>
         <span className="text-sm font-black">{initials(row.student.name)}</span>
       </div>
-      <div className="min-w-0 w-full">
-        <div className="truncate text-xs font-bold">{row.student.name}</div>
-        <div className="text-[10px] text-muted-foreground">
+      <div className="w-full flex-1">
+        <div className="whitespace-normal break-words text-xs font-bold leading-tight hyphens-auto">
+          {row.student.name}
+        </div>
+        <div className="mt-1 text-[10px] text-muted-foreground">
           {row.student.class_id} · #{row.student.admission_no}
         </div>
       </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-lg font-black">{row.points}</span>
-        <span className="text-[10px] uppercase tracking-wide text-muted-foreground">pts</span>
+      <div className="mt-auto flex flex-col items-center">
+        <div className="flex items-baseline gap-1">
+          <span className="text-lg font-black">{row.points}</span>
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">pts</span>
+        </div>
+        <div className="text-[10px] text-muted-foreground">avg {row.avg.toFixed(1)}</div>
       </div>
-      <div className="text-[10px] text-muted-foreground">avg {row.avg.toFixed(1)}</div>
     </Link>
   );
 }
