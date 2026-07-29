@@ -41,16 +41,13 @@ export const Route = createFileRoute("/stats")({
   component: Stats,
 });
 
-type Section = "overview" | "teachers" | "classes" | "subjects" | "students" | "syllabus" | "questions" | "reports";
+type Section = "overview" | "teachers" | "classes" | "syllabus" | "students";
 const SECTIONS: { key: Section; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: "overview", label: "Overview", icon: Activity },
   { key: "teachers", label: "Teachers", icon: Users },
   { key: "classes", label: "Classes", icon: GraduationCap },
-  { key: "subjects", label: "Subjects", icon: BookOpen },
-  { key: "students", label: "Students", icon: TrendingUp },
   { key: "syllabus", label: "Syllabus", icon: Clock },
-  { key: "questions", label: "Questions", icon: HelpCircle },
-  { key: "reports", label: "Reports", icon: Printer },
+  { key: "students", label: "Rankings", icon: TrendingUp },
 ];
 
 interface Filters {
