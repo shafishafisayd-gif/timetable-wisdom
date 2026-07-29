@@ -21,7 +21,6 @@ import {
   textOn,
   jsDayToCode,
   type ClassId,
-  type DayCode,
 } from "@/data/timetable";
 import { StudentsSection } from "@/components/StudentsSection";
 import {
