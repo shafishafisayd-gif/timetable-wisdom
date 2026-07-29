@@ -153,19 +153,20 @@ function Stats() {
       {section === "classes" && (
         <ClassesSection evals={allEvals} students={studentsQ.data ?? []} statuses={statusQ.data ?? []} filters={filters} />
       )}
-      {section === "subjects" && (
-        <SubjectsSection evals={filteredEvals} students={studentsQ.data ?? []} statuses={statusQ.data ?? []} />
-      )}
       {section === "students" && (
         <StudentsSection evals={filteredEvals} students={studentsQ.data ?? []} />
       )}
       {section === "syllabus" && (
         <SyllabusSection statuses={statusQ.data ?? []} />
       )}
-      {section === "questions" && (
-        <QuestionsSection evals={filteredEvals} allEvals={allEvals} />
-      )}
-      {section === "reports" && <ReportsSection />}
+
+      {/* Progressive disclosure: deeper analytics kept out of the main flow */}
+      <MoreDetails
+        evals={filteredEvals}
+        allEvals={allEvals}
+        students={studentsQ.data ?? []}
+        statuses={statusQ.data ?? []}
+      />
 
       {showSettings && settingsQ.data && <SettingsDialog onClose={() => setShowSettings(false)} settings={settingsQ.data} />}
     </div>
