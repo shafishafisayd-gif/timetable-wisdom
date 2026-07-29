@@ -41,16 +41,13 @@ export const Route = createFileRoute("/stats")({
   component: Stats,
 });
 
-type Section = "overview" | "teachers" | "classes" | "subjects" | "students" | "syllabus" | "questions" | "reports";
+type Section = "overview" | "teachers" | "classes" | "syllabus" | "students";
 const SECTIONS: { key: Section; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { key: "overview", label: "Overview", icon: Activity },
   { key: "teachers", label: "Teachers", icon: Users },
   { key: "classes", label: "Classes", icon: GraduationCap },
-  { key: "subjects", label: "Subjects", icon: BookOpen },
-  { key: "students", label: "Students", icon: TrendingUp },
   { key: "syllabus", label: "Syllabus", icon: Clock },
-  { key: "questions", label: "Questions", icon: HelpCircle },
-  { key: "reports", label: "Reports", icon: Printer },
+  { key: "students", label: "Rankings", icon: TrendingUp },
 ];
 
 interface Filters {
@@ -156,19 +153,20 @@ function Stats() {
       {section === "classes" && (
         <ClassesSection evals={allEvals} students={studentsQ.data ?? []} statuses={statusQ.data ?? []} filters={filters} />
       )}
-      {section === "subjects" && (
-        <SubjectsSection evals={filteredEvals} students={studentsQ.data ?? []} statuses={statusQ.data ?? []} />
-      )}
       {section === "students" && (
         <StudentsSection evals={filteredEvals} students={studentsQ.data ?? []} />
       )}
       {section === "syllabus" && (
         <SyllabusSection statuses={statusQ.data ?? []} />
       )}
-      {section === "questions" && (
-        <QuestionsSection evals={filteredEvals} allEvals={allEvals} />
-      )}
-      {section === "reports" && <ReportsSection />}
+
+      {/* Progressive disclosure: deeper analytics kept out of the main flow */}
+      <MoreDetails
+        evals={filteredEvals}
+        allEvals={allEvals}
+        students={studentsQ.data ?? []}
+        statuses={statusQ.data ?? []}
+      />
 
       {showSettings && settingsQ.data && <SettingsDialog onClose={() => setShowSettings(false)} settings={settingsQ.data} />}
     </div>
@@ -205,19 +203,13 @@ function OverviewSection({
   const perfScore = Math.round(((sylSummary.percent + attendPct) / 2));
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <StatCard label="Teachers" value={TEACHERS.length} tone="sky" />
-      <StatCard label="Classes" value={CLASSES.length} tone="sky" />
-      <StatCard label="Students" value={students.length} tone="sky" />
-      <StatCard label="Subjects" value={subs.size} tone="sky" />
-      <StatCard label="Weekly Periods" value={totalPeriods} tone="primary" />
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <StatCard label="Performance Score" value={`${perfScore}%`} tone={perfScore >= 75 ? "good" : perfScore >= 50 ? "primary" : "warn"} />
       <StatCard label="Attendance" value={`${attendPct}%`} tone={attendPct >= 75 ? "good" : attendPct >= 50 ? "primary" : "warn"} />
       <StatCard label="Syllabus" value={`${sylSummary.percent}%`} tone={sylSummary.percent >= 75 ? "good" : sylSummary.percent >= 50 ? "primary" : "warn"} />
-      <StatCard label="Avg Mark" value={avgMark.toFixed(1)} tone="primary" />
-      <StatCard label="Active Rounds" value={activeRounds} tone="primary" />
-      <StatCard label="Performance Score" value={`${perfScore}%`} tone={perfScore >= 75 ? "good" : perfScore >= 50 ? "primary" : "warn"} />
-      <StatCard label="Questions Asked" value={evals.length} tone="primary" />
-      <StatCard label="Minus Records" value={evals.filter((e) => e.status === "not_answered").length} tone="warn" />
+      <StatCard label="Students" value={students.length} sub={`${TEACHERS.length} teachers · ${CLASSES.length} classes`} tone="sky" />
+      <StatCard label="Questions" value={evals.length} sub={`avg ${avgMark.toFixed(1)}`} tone="primary" />
+      <StatCard label="Active Rounds" value={activeRounds} sub={`${totalPeriods} periods/wk`} tone="primary" />
     </div>
   );
 }
@@ -717,3 +709,47 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
     </label>
   );
 }
+
+// ============ Progressive disclosure wrapper ============
+function MoreDetails({
+  evals, allEvals, students, statuses,
+}: {
+  evals: Evaluation[];
+  allEvals: Evaluation[];
+  students: Student[];
+  statuses: import("@/lib/syllabus-api").SyllabusStatusRow[];
+}) {
+  const [open, setOpen] = useState<null | "subjects" | "questions" | "reports">(null);
+  const items: { key: "subjects" | "questions" | "reports"; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { key: "subjects", label: "Subject analytics", icon: BookOpen },
+    { key: "questions", label: "Question activity", icon: HelpCircle },
+    { key: "reports", label: "Reports & print", icon: Printer },
+  ];
+  return (
+    <div className="space-y-2 pt-2">
+      {items.map((it) => {
+        const Icon = it.icon;
+        const isOpen = open === it.key;
+        return (
+          <div key={it.key} className="card-soft overflow-hidden">
+            <button
+              onClick={() => setOpen(isOpen ? null : it.key)}
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-foreground hover:bg-secondary/40"
+            >
+              <span className="flex items-center gap-2"><Icon className="h-4 w-4 text-muted-foreground" />{it.label}</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isOpen && (
+              <div className="border-t border-border p-3">
+                {it.key === "subjects" && <SubjectsSection evals={evals} students={students} statuses={statuses} />}
+                {it.key === "questions" && <QuestionsSection evals={evals} allEvals={allEvals} />}
+                {it.key === "reports" && <ReportsSection />}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
