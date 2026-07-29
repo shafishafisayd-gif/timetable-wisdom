@@ -324,50 +324,80 @@ function SessionPage() {
         </div>
       </div>
 
-      {/* Random locked student card */}
-      {activeStudent && (
-        <div className="card-lift overflow-hidden">
-          <div className="h-1.5" style={{ backgroundColor: teacher.color }} />
-          <div className="p-5">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Sparkles className="h-4 w-4" /> Random Selected Student
-            </div>
-            <div
-              className="mt-3 rounded-3xl border-2 p-4 shadow-sm"
-              style={{ borderColor: teacher.color, backgroundColor: teacher.color + "14" }}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-lg font-bold"
-                  style={{ backgroundColor: teacher.color, color: fg }}
-                >
-                  <User className="h-6 w-6" />
+      {/* Active student card — manual takes priority over the random locked pick */}
+      {!roundComplete && (manualStudent || activeStudent) && (
+        (() => {
+          const isManual = !!manualStudent;
+          const s = (manualStudent ?? activeStudent)!;
+          const accent = isManual ? "hsl(var(--primary))" : teacher.color;
+          const badgeFg = isManual ? "hsl(var(--primary-foreground))" : fg;
+          return (
+            <div className="card-lift overflow-hidden ring-2" style={{ boxShadow: `0 0 0 2px ${accent}` }}>
+              <div className="h-1.5" style={{ backgroundColor: accent }} />
+              <div className="p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide" style={{ color: accent }}>
+                    <Sparkles className="h-4 w-4" />
+                    {isManual ? "Manually Selected · Active" : "Random Selected · Active"}
+                  </div>
+                  {isManual && (
+                    <button
+                      onClick={() => { setManualId(null); setManualMode(null); }}
+                      className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-[11px] font-semibold text-secondary-foreground hover:bg-secondary/70"
+                    >
+                      <X className="h-3.5 w-3.5" /> Back to random
+                    </button>
+                  )}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <Link
-                    to="/students/$id"
-                    params={{ id: activeStudent.id }}
-                    className="block whitespace-normal break-words text-xl font-bold leading-snug text-foreground hover:underline sm:text-2xl"
-                  >
-                    {activeStudent.name}
-                  </Link>
-                  <div className="mt-1 text-xs text-muted-foreground break-words">
-                    Adm #{activeStudent.admission_no} · Class {activeStudent.class_id}
+                <div
+                  className="mt-3 rounded-3xl border-2 p-4 shadow-sm"
+                  style={{ borderColor: accent, backgroundColor: accent + "14" }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-lg font-bold"
+                      style={{ backgroundColor: accent, color: badgeFg }}
+                    >
+                      <User className="h-6 w-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        to="/students/$id"
+                        params={{ id: s.id }}
+                        className="block whitespace-normal break-words text-xl font-bold leading-snug text-foreground hover:underline sm:text-2xl"
+                      >
+                        {s.name}
+                      </Link>
+                      <div className="mt-1 text-xs text-muted-foreground break-words">
+                        Adm #{s.admission_no} · Class {s.class_id} · {subject}
+                      </div>
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        <span className="rounded-full bg-background/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-foreground">
+                          Round {roundNo}
+                        </span>
+                        <span
+                          className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white"
+                          style={{ backgroundColor: accent }}
+                        >
+                          Awaiting Evaluation
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
+                <EvalControls
+                  mode={isManual ? manualMode : randomMode}
+                  setMode={isManual ? setManualMode : setRandomMode}
+                  onAnswered={(m) => saveEvaluation(s, "answered", m, isManual)}
+                  onNotAnswered={(m) => saveEvaluation(s, "not_answered", m, isManual)}
+                  onAbsent={() => saveEvaluation(s, "absent", null, isManual)}
+                  busy={busy}
+                />
               </div>
             </div>
-
-            <EvalControls
-              mode={randomMode}
-              setMode={setRandomMode}
-              onAnswered={(m) => saveEvaluation(activeStudent, "answered", m, false)}
-              onNotAnswered={(m) => saveEvaluation(activeStudent, "not_answered", m, false)}
-              onAbsent={() => saveEvaluation(activeStudent, "absent", null, false)}
-              busy={busy}
-            />
-          </div>
-        </div>
+          );
+        })()
       )}
 
       {/* Round complete summary */}
@@ -397,7 +427,7 @@ function SessionPage() {
           {remainingForList.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               {activeStudent
-                ? "All other students have been asked. Evaluate the random student above to finish the round."
+                ? "All other students have been asked. Evaluate the active student above to finish the round."
                 : "No students remaining."}
             </p>
           ) : (
@@ -420,45 +450,11 @@ function SessionPage() {
                       {s.name}
                     </div>
                     <div className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Not asked
+                      Tap to evaluate now
                     </div>
                   </div>
                 </button>
               ))}
-            </div>
-          )}
-
-          {/* Manual evaluation panel */}
-          {manualStudent && (
-            <div className="mt-4 rounded-2xl border-2 border-primary/40 bg-primary/5 p-4">
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                    Manual Evaluation
-                  </div>
-                  <div className="whitespace-normal break-words text-base font-bold leading-snug">
-                    {manualStudent.name}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-muted-foreground">
-                    Adm #{manualStudent.admission_no} · Class {manualStudent.class_id}
-                  </div>
-                </div>
-                <button
-                  onClick={() => { setManualId(null); setManualMode(null); }}
-                  className="rounded-full bg-secondary p-1.5 text-secondary-foreground hover:bg-secondary/70"
-                  aria-label="Close"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <EvalControls
-                mode={manualMode}
-                setMode={setManualMode}
-                onAnswered={(m) => saveEvaluation(manualStudent, "answered", m, true)}
-                onNotAnswered={(m) => saveEvaluation(manualStudent, "not_answered", m, true)}
-                onAbsent={() => saveEvaluation(manualStudent, "absent", null, true)}
-                busy={busy}
-              />
             </div>
           )}
         </div>
