@@ -203,19 +203,13 @@ function OverviewSection({
   const perfScore = Math.round(((sylSummary.percent + attendPct) / 2));
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <StatCard label="Teachers" value={TEACHERS.length} tone="sky" />
-      <StatCard label="Classes" value={CLASSES.length} tone="sky" />
-      <StatCard label="Students" value={students.length} tone="sky" />
-      <StatCard label="Subjects" value={subs.size} tone="sky" />
-      <StatCard label="Weekly Periods" value={totalPeriods} tone="primary" />
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <StatCard label="Performance Score" value={`${perfScore}%`} tone={perfScore >= 75 ? "good" : perfScore >= 50 ? "primary" : "warn"} />
       <StatCard label="Attendance" value={`${attendPct}%`} tone={attendPct >= 75 ? "good" : attendPct >= 50 ? "primary" : "warn"} />
       <StatCard label="Syllabus" value={`${sylSummary.percent}%`} tone={sylSummary.percent >= 75 ? "good" : sylSummary.percent >= 50 ? "primary" : "warn"} />
-      <StatCard label="Avg Mark" value={avgMark.toFixed(1)} tone="primary" />
-      <StatCard label="Active Rounds" value={activeRounds} tone="primary" />
-      <StatCard label="Performance Score" value={`${perfScore}%`} tone={perfScore >= 75 ? "good" : perfScore >= 50 ? "primary" : "warn"} />
-      <StatCard label="Questions Asked" value={evals.length} tone="primary" />
-      <StatCard label="Minus Records" value={evals.filter((e) => e.status === "not_answered").length} tone="warn" />
+      <StatCard label="Students" value={students.length} sub={`${TEACHERS.length} teachers · ${CLASSES.length} classes`} tone="sky" />
+      <StatCard label="Questions" value={evals.length} sub={`avg ${avgMark.toFixed(1)}`} tone="primary" />
+      <StatCard label="Active Rounds" value={activeRounds} sub={`${totalPeriods} periods/wk`} tone="primary" />
     </div>
   );
 }
