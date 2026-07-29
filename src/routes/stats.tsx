@@ -709,3 +709,47 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
     </label>
   );
 }
+
+// ============ Progressive disclosure wrapper ============
+function MoreDetails({
+  evals, allEvals, students, statuses,
+}: {
+  evals: Evaluation[];
+  allEvals: Evaluation[];
+  students: Student[];
+  statuses: import("@/lib/syllabus-api").SyllabusStatusRow[];
+}) {
+  const [open, setOpen] = useState<null | "subjects" | "questions" | "reports">(null);
+  const items: { key: "subjects" | "questions" | "reports"; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { key: "subjects", label: "Subject analytics", icon: BookOpen },
+    { key: "questions", label: "Question activity", icon: HelpCircle },
+    { key: "reports", label: "Reports & print", icon: Printer },
+  ];
+  return (
+    <div className="space-y-2 pt-2">
+      {items.map((it) => {
+        const Icon = it.icon;
+        const isOpen = open === it.key;
+        return (
+          <div key={it.key} className="card-soft overflow-hidden">
+            <button
+              onClick={() => setOpen(isOpen ? null : it.key)}
+              className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-foreground hover:bg-secondary/40"
+            >
+              <span className="flex items-center gap-2"><Icon className="h-4 w-4 text-muted-foreground" />{it.label}</span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isOpen && (
+              <div className="border-t border-border p-3">
+                {it.key === "subjects" && <SubjectsSection evals={evals} students={students} statuses={statuses} />}
+                {it.key === "questions" && <QuestionsSection evals={evals} allEvals={allEvals} />}
+                {it.key === "reports" && <ReportsSection />}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
