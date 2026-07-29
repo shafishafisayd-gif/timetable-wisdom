@@ -604,6 +604,3 @@ function QuickAction({ to, icon: Icon, label }: { to: any; icon: React.Component
     </Link>
   );
 }
-
-// silence unused imports
-void DayCode;
