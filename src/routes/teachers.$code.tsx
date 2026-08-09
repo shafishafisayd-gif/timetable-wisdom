@@ -140,10 +140,35 @@ function TeacherPage() {
       {/* Stats grid */}
       {tab === "overview" && (
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatCard label="Weekly Periods" value={stats.totalWeeklyPeriods} />
-        <StatCard label="Classes" value={stats.totalClasses} />
-        <StatCard label="Subjects" value={stats.subjects.length} />
+        <StatCard label="Total Assigned" value={stats.totalWeeklyPeriods} />
+        <StatCard label="Subject Specified" value={stats.subjectSpecifiedPeriods} />
+        <StatCard label="Not Specified" value={stats.subjectUnspecifiedPeriods} />
         <StatCard label="Teaching Hrs" value={`${(stats.totalWeeklyPeriods * 0.67).toFixed(1)}`} />
+      </div>
+      )}
+
+      {tab === "overview" && (
+      <div className="card-soft p-4">
+        <h3 className="text-sm font-semibold text-foreground">Subject Breakdown</h3>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">Counted only where the official timetable writes a subject.</p>
+        <div className="mt-3 space-y-1.5">
+          {stats.subjectBreakdown.map((row) => (
+            <div key={row.subject} className="flex items-center justify-between rounded-xl bg-secondary/50 px-3 py-2 text-xs">
+              <span className="font-medium text-foreground">{row.subject}</span>
+              <span className="font-bold text-foreground">{row.periods}</span>
+            </div>
+          ))}
+          {stats.subjectUnspecifiedPeriods > 0 && (
+            <div className="flex items-center justify-between rounded-xl border border-dashed border-border px-3 py-2 text-xs">
+              <span className="font-medium italic text-muted-foreground">Subject Not Specified</span>
+              <span className="font-bold text-foreground">{stats.subjectUnspecifiedPeriods}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between rounded-xl bg-primary/10 px-3 py-2 text-xs">
+            <span className="font-semibold text-foreground">Total Assigned</span>
+            <span className="font-bold text-foreground">{stats.totalWeeklyPeriods}</span>
+          </div>
+        </div>
       </div>
       )}
 

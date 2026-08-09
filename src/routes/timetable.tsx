@@ -5,7 +5,7 @@ import {
   DAYS,
   DAY_LABELS,
   TIMETABLE_COLUMNS,
-  SCHEDULE,
+  getClassCell,
   CLASSES,
   TEACHER_BY_CODE,
   jsDayToCode,
@@ -127,8 +127,26 @@ function OverallTimetable() {
                       );
                     }
                     const p = col.period.period;
-                    const slot = SCHEDULE[day][p].find((s) => s.className === cls);
-                    if (!slot) {
+                    const cell = getClassCell(day, cls, p);
+                    if (cell.kind === "break") {
+                      return (
+                        <td key={`c-p-${cls}-${i}`} className="align-top">
+                          <div className="min-w-[92px] rounded-lg bg-primary/10 px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-primary/80">
+                            Break
+                          </div>
+                        </td>
+                      );
+                    }
+                    if (cell.kind === "activity") {
+                      return (
+                        <td key={`c-p-${cls}-${i}`} className="align-top">
+                          <div className="min-w-[92px] rounded-lg bg-secondary px-2 py-2 text-center text-[10px] font-semibold text-secondary-foreground">
+                            {cell.label}
+                          </div>
+                        </td>
+                      );
+                    }
+                    if (cell.kind === "free") {
                       return (
                         <td key={`c-p-${cls}-${i}`} className="align-top">
                           <div className="min-w-[92px] rounded-lg bg-secondary/40 px-2 py-2 text-center text-[10px] font-medium text-muted-foreground">
@@ -137,6 +155,7 @@ function OverallTimetable() {
                         </td>
                       );
                     }
+                    const slot = cell.slot;
                     const teacher = TEACHER_BY_CODE[slot.teacher];
                     const color = teacher?.color ?? "#64748B";
                     return (
@@ -147,11 +166,14 @@ function OverallTimetable() {
                           className="block min-w-[92px] rounded-lg px-2 py-1.5 text-[11px] font-semibold shadow-sm transition active:scale-95"
                           style={{ backgroundColor: color, color: textOn(color) }}
                         >
-                          <div className="truncate font-bold leading-tight">{slot.subject}</div>
+                          <div className={`font-bold leading-tight ${slot.subjectSpecified ? "truncate" : "italic opacity-80"}`}>
+                            {slot.subjectSpecified ? slot.subject : "Subject not specified"}
+                          </div>
                           <div className="opacity-90 leading-tight">{slot.teacher}</div>
                         </Link>
                       </td>
                     );
+
                   })}
                 </tr>
               ))}

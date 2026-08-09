@@ -50,7 +50,7 @@ function ClassesIndex() {
       const seen = new Set<string>();
       for (const d of DAYS) for (const p of PERIODS) {
         for (const s of SCHEDULE[d][p]) {
-          if (s.className !== cls) continue;
+          if (s.className !== cls || !s.subjectSpecified) continue;
           const k = `${s.className}|${s.subject}`;
           if (!seen.has(k)) { seen.add(k); pairs.push({ className: cls, subject: s.subject }); }
         }

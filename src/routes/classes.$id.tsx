@@ -9,6 +9,7 @@ import { z } from "zod";
 import {
   CLASSES,
   getClassSchedule,
+  getClassCell,
   SCHEDULE,
   DAYS,
   DAY_LABELS,
@@ -121,7 +122,7 @@ function ClassHero({ cls }: { cls: ClassId }) {
   const teachers = new Set<string>();
   for (const d of DAYS) for (const p of PERIODS) {
     const s = sched[d][p];
-    if (s) { weekly++; subs.add(s.subject); teachers.add(s.teacher); }
+    if (s) { weekly++; if (s.subjectSpecified) subs.add(s.subject); teachers.add(s.teacher); }
   }
 
   return (
@@ -211,20 +212,23 @@ function TimetableTab({ cls }: { cls: ClassId }) {
                     );
                   }
                   const p = col.period.period;
-                  const slot = sched[d][p];
+                  const cell = getClassCell(d, cls, p);
                   const isNow = day === d && p === currentP;
-                  if (!slot) return (
+                  if (cell.kind !== "slot") return (
                     <td key={`c-p-${d}-${i}`}>
-                      <div className={`min-w-[92px] rounded-lg px-2 py-2 text-center text-[10px] ${isNow ? "ring-2 ring-primary" : ""} bg-secondary/40 text-muted-foreground`}>FREE</div>
+                      <div className={`min-w-[92px] rounded-lg px-2 py-2 text-center text-[10px] font-medium ${isNow ? "ring-2 ring-primary" : ""} ${cell.kind === "break" ? "bg-primary/10 text-primary/80" : cell.kind === "activity" ? "bg-secondary text-secondary-foreground" : "bg-secondary/40 text-muted-foreground"}`}>
+                        {cell.kind === "break" ? "Break" : cell.kind === "activity" ? cell.label : "FREE"}
+                      </div>
                     </td>
                   );
+                  const slot = cell.slot;
                   const teacher = TEACHER_BY_CODE[slot.teacher];
                   return (
                     <td key={`c-p-${d}-${i}`}>
                       <Link to="/teachers/$code" params={{ code: slot.teacher }}
                         className={`block min-w-[92px] rounded-lg px-2 py-1.5 text-[11px] font-semibold shadow-sm ${isNow ? "ring-2 ring-primary" : ""}`}
                         style={{ backgroundColor: teacher?.color, color: teacher ? textOn(teacher.color) : "#fff" }}>
-                        <div className="truncate font-bold">{slot.subject}</div>
+                        <div className={slot.subjectSpecified ? "truncate font-bold" : "font-bold italic opacity-80"}>{slot.subjectSpecified ? slot.subject : "Subject not specified"}</div>
                         <div className="opacity-90">{slot.teacher}</div>
                       </Link>
                     </td>
@@ -253,7 +257,7 @@ function SyllabusTab({ cls }: { cls: ClassId }) {
     const map = new Map<string, { teacher: string; subject: string; weekly: number }[]>();
     for (const d of DAYS) for (const p of PERIODS) {
       for (const s of SCHEDULE[d][p]) {
-        if (s.className !== cls) continue;
+        if (s.className !== cls || !s.subjectSpecified) continue;
         const arr = map.get(s.teacher) ?? [];
         const existing = arr.find((x) => x.subject === s.subject);
         if (existing) existing.weekly++;
