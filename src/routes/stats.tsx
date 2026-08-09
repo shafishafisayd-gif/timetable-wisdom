@@ -243,7 +243,7 @@ function TeachersSection({
             </div>
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-bold text-foreground">{r.teacher.fullName}</div>
-              <div className="text-[10px] text-muted-foreground">{r.stats.totalClasses} classes · {r.stats.subjects.length} subjects · {r.stats.totalWeeklyPeriods}p/week</div>
+              <div className="text-[10px] text-muted-foreground">{r.stats.totalClasses} classes · {r.stats.subjects.length} subjects · {r.stats.totalWeeklyPeriods}p/week ({r.stats.subjectSpecifiedPeriods} specified · {r.stats.subjectUnspecifiedPeriods} unspecified)</div>
             </div>
             <Link to="/teachers/$code" params={{ code: r.teacher.code }} className="shrink-0 rounded-full bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">Details →</Link>
           </div>
