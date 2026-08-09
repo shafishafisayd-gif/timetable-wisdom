@@ -37,6 +37,7 @@ function buildClassSubjectMap(): Map<ClassId, Map<string, Set<string>>> {
   for (const d of DAYS) {
     for (const p of PERIODS) {
       for (const s of SCHEDULE[d][p]) {
+        if (!s.subjectSpecified) continue;
         const cls = out.get(s.className)!;
         const teachers = cls.get(s.subject) ?? new Set<string>();
         teachers.add(s.teacher);

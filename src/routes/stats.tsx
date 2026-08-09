@@ -80,7 +80,7 @@ function Stats() {
 
   const allSubjects = useMemo(() => {
     const set = new Set<string>();
-    for (const d of DAYS) for (const p of PERIODS) for (const s of SCHEDULE[d][p]) set.add(s.subject);
+    for (const d of DAYS) for (const p of PERIODS) for (const s of SCHEDULE[d][p]) if (s.subjectSpecified) set.add(s.subject);
     return Array.from(set).sort();
   }, []);
 
@@ -180,7 +180,7 @@ function OverviewSection({
   let totalPeriods = 0;
   const subs = new Set<string>();
   for (const d of DAYS) for (const p of PERIODS) for (const s of SCHEDULE[d][p]) {
-    totalPeriods++; subs.add(s.subject);
+    totalPeriods++; if (s.subjectSpecified) subs.add(s.subject);
   }
   const attend = evals.filter((e) => e.status !== "absent").length;
   const attendPct = evals.length ? Math.round((attend / evals.length) * 100) : 0;
@@ -290,7 +290,7 @@ function ClassesSection({
         const pairs: { className: ClassId; subject: string }[] = [];
         const seen = new Set<string>();
         for (const d of DAYS) for (const p of PERIODS) for (const s of SCHEDULE[d][p]) {
-          if (s.className !== cls) continue;
+          if (s.className !== cls || !s.subjectSpecified) continue;
           const k = `${s.className}|${s.subject}`;
           if (!seen.has(k)) { seen.add(k); pairs.push({ className: cls, subject: s.subject }); }
         }
@@ -332,6 +332,7 @@ function SubjectsSection({
     // Build {subject, teacherCode, classes[]} pairs from schedule
     const map = new Map<string, { subject: string; teacherCode: string; classes: Set<ClassId>; weekly: number }>();
     for (const d of DAYS) for (const p of PERIODS) for (const s of SCHEDULE[d][p]) {
+      if (!s.subjectSpecified) continue;
       const key = `${s.subject}|${s.teacher}`;
       const row = map.get(key) ?? { subject: s.subject, teacherCode: s.teacher, classes: new Set<ClassId>(), weekly: 0 };
       row.classes.add(s.className);
@@ -454,7 +455,7 @@ function SyllabusSection({ statuses }: { statuses: import("@/lib/syllabus-api").
     const pairs: { className: ClassId; subject: string }[] = [];
     const seen = new Set<string>();
     for (const d of DAYS) for (const p of PERIODS) for (const s of SCHEDULE[d][p]) {
-      if (s.className !== cls) continue;
+      if (s.className !== cls || !s.subjectSpecified) continue;
       const k = `${s.className}|${s.subject}`;
       if (!seen.has(k)) { seen.add(k); pairs.push({ className: cls, subject: s.subject }); }
     }

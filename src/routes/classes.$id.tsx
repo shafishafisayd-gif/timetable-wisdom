@@ -121,7 +121,7 @@ function ClassHero({ cls }: { cls: ClassId }) {
   const teachers = new Set<string>();
   for (const d of DAYS) for (const p of PERIODS) {
     const s = sched[d][p];
-    if (s) { weekly++; subs.add(s.subject); teachers.add(s.teacher); }
+    if (s) { weekly++; if (s.subjectSpecified) subs.add(s.subject); teachers.add(s.teacher); }
   }
 
   return (
@@ -253,7 +253,7 @@ function SyllabusTab({ cls }: { cls: ClassId }) {
     const map = new Map<string, { teacher: string; subject: string; weekly: number }[]>();
     for (const d of DAYS) for (const p of PERIODS) {
       for (const s of SCHEDULE[d][p]) {
-        if (s.className !== cls) continue;
+        if (s.className !== cls || !s.subjectSpecified) continue;
         const arr = map.get(s.teacher) ?? [];
         const existing = arr.find((x) => x.subject === s.subject);
         if (existing) existing.weekly++;
