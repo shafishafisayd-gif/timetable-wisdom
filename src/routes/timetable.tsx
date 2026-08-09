@@ -5,7 +5,7 @@ import {
   DAYS,
   DAY_LABELS,
   TIMETABLE_COLUMNS,
-  SCHEDULE,
+  getClassCell,
   CLASSES,
   TEACHER_BY_CODE,
   jsDayToCode,
