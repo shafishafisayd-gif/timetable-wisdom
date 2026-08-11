@@ -151,6 +151,8 @@ export interface Slot {
   subject: string;
   /** True only when the finalized PDF explicitly writes a subject in the cell. */
   subjectSpecified: boolean;
+  /** True when a temporary (single-day) override changed this slot. */
+  temporary?: boolean;
 }
 
 export type DaySchedule = Record<PeriodNum, Slot[]>;
@@ -722,8 +724,7 @@ export function getTeacherSchedule(code: string): Record<DayCode, Record<PeriodN
   for (const d of DAYS) {
     out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      const slot = SCHEDULE[d][p].find((s) => s.teacher === code) || null;
-      out[d][p] = slot;
+      out[d][p] = applyTemp(d, p, SCHEDULE[d][p].find((s) => s.teacher === code));
     }
   }
   return out;
@@ -734,8 +735,7 @@ export function getClassSchedule(cls: ClassId): Record<DayCode, Record<PeriodNum
   for (const d of DAYS) {
     out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      const slot = SCHEDULE[d][p].find((s) => s.className === cls) || null;
-      out[d][p] = slot;
+      out[d][p] = applyTemp(d, p, SCHEDULE[d][p].find((s) => s.className === cls));
     }
   }
   return out;
@@ -831,7 +831,7 @@ export function getCurrentStatus(code: string, now: Date = new Date()): NowStatu
   const mins = now.getHours() * 60 + now.getMinutes();
   for (const p of PERIOD_TIMES) {
     if (mins >= p.startMin && mins < p.endMin) {
-      const slot = SCHEDULE[day][p.period].find((s) => s.teacher === code);
+      const slot = applyTemp(day, p.period, SCHEDULE[day][p.period].find((s) => s.teacher === code));
       return slot ? { kind: "teaching", slot, period: p } : { kind: "free", period: p };
     }
   }
@@ -862,7 +862,7 @@ export function getNextPeriodForTeacher(code: string, now: Date = new Date()): {
   const mins = now.getHours() * 60 + now.getMinutes();
   for (const p of PERIOD_TIMES) {
     if (p.startMin > mins) {
-      const slot = SCHEDULE[day][p.period].find((s) => s.teacher === code);
+      const slot = applyTemp(day, p.period, SCHEDULE[day][p.period].find((s) => s.teacher === code));
       if (slot) return { period: p, slot };
     }
   }
