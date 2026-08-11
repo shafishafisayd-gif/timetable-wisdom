@@ -135,7 +135,7 @@ export async function fetchSyllabusStatus(opts?: {
   subject?: string;
   academicYear?: string;
 }): Promise<SyllabusStatusRow[]> {
-  let q = supabase.from("syllabus_status").select("*");
+  let q = supabase.from("syllabus_status").select("*").neq("subject", SUBJECT_UNSPECIFIED);
   if (opts?.teacherCode) q = q.eq("teacher_code", opts.teacherCode);
   if (opts?.classId) q = q.eq("class_id", opts.classId);
   if (opts?.subject) q = q.eq("subject", opts.subject);
