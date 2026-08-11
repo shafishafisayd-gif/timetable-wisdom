@@ -23,6 +23,7 @@ import {
   type DayCode,
   type Teacher,
 } from "@/data/timetable";
+import { useTempVersion } from "@/lib/temp-timetable";
 import { useNow } from "@/lib/use-now";
 import { AskQuestionCard } from "@/components/AskQuestionCard";
 import { setPreferredTeacher } from "@/lib/preferred-teacher";
