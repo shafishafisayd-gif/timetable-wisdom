@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { useRealtimeSync } from "../lib/use-realtime-sync";
 import { useTempTimetableSync } from "../lib/temp-timetable";
 import { TempBanner } from "../components/TempBanner";
+import { Toaster } from "@/components/ui/sonner";
 
 
 function NotFoundComponent() {
@@ -196,6 +197,7 @@ function RootComponent() {
           <Outlet />
         </main>
         <BottomNav />
+        <Toaster position="top-center" />
       </div>
     </QueryClientProvider>
   );

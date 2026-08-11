@@ -69,6 +69,7 @@ type Tab = "overview" | "today" | "weekly" | "syllabus" | "syllabus_pdf";
 function TeacherPage() {
   const { code } = Route.useParams();
   const teacher = TEACHER_BY_CODE[code]!;
+  useTempVersion();
   const now = useNow();
   const sched = getTeacherSchedule(code);
   const stats = getTeacherStats(code);
