@@ -83,6 +83,8 @@ export function getTeacherClassSubjects(
     for (const p of PERIODS) {
       const s = sched[d][p];
       if (!s) continue;
+      // Teacher-only periods are assigned work, but never syllabus items.
+      if (!s.subjectSpecified || s.subject === SUBJECT_UNSPECIFIED) continue;
       const key = `${s.className}|${s.subject}`;
       const row = map.get(key) ?? { className: s.className, subject: s.subject, weekly: 0 };
       row.weekly += 1;
