@@ -14,6 +14,8 @@ import { Home, CalendarDays, GraduationCap, BarChart3, Trophy } from "lucide-rea
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { useRealtimeSync } from "../lib/use-realtime-sync";
+import { useTempTimetableSync } from "../lib/temp-timetable";
+import { TempBanner } from "../components/TempBanner";
 
 
 function NotFoundComponent() {
@@ -178,6 +180,7 @@ function TopBar() {
 
 function RealtimeBridge() {
   useRealtimeSync();
+  useTempTimetableSync();
   return null;
 }
 
@@ -188,6 +191,7 @@ function RootComponent() {
       <RealtimeBridge />
       <div className="min-h-screen bg-background">
         <TopBar />
+        <TempBanner />
         <main className="mx-auto max-w-3xl px-4 pb-28 pt-4">
           <Outlet />
         </main>
