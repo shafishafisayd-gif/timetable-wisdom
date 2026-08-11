@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DAYS, PERIODS, getTeacherSchedule, type ClassId } from "@/data/timetable";
+import { DAYS, PERIODS, getTeacherSchedule, SUBJECT_UNSPECIFIED, type ClassId } from "@/data/timetable";
 
 export type SyllabusStatusValue = "not_started" | "in_progress" | "completed";
 
@@ -83,6 +83,8 @@ export function getTeacherClassSubjects(
     for (const p of PERIODS) {
       const s = sched[d][p];
       if (!s) continue;
+      // Teacher-only periods are assigned work, but never syllabus items.
+      if (!s.subjectSpecified || s.subject === SUBJECT_UNSPECIFIED) continue;
       const key = `${s.className}|${s.subject}`;
       const row = map.get(key) ?? { className: s.className, subject: s.subject, weekly: 0 };
       row.weekly += 1;
@@ -133,7 +135,7 @@ export async function fetchSyllabusStatus(opts?: {
   subject?: string;
   academicYear?: string;
 }): Promise<SyllabusStatusRow[]> {
-  let q = supabase.from("syllabus_status").select("*");
+  let q = supabase.from("syllabus_status").select("*").neq("subject", SUBJECT_UNSPECIFIED);
   if (opts?.teacherCode) q = q.eq("teacher_code", opts.teacherCode);
   if (opts?.classId) q = q.eq("class_id", opts.classId);
   if (opts?.subject) q = q.eq("subject", opts.subject);
