@@ -151,6 +151,8 @@ export interface Slot {
   subject: string;
   /** True only when the finalized PDF explicitly writes a subject in the cell. */
   subjectSpecified: boolean;
+  /** True when a temporary (single-day) override changed this slot. */
+  temporary?: boolean;
 }
 
 export type DaySchedule = Record<PeriodNum, Slot[]>;
@@ -646,9 +648,66 @@ export type ClassCell =
   | { kind: "activity"; label: string }
   | { kind: "free" };
 
+// ---------------------------------------------------------------------------
+// TEMPORARY OVERRIDE LAYER
+// Permanent timetable (SCHEDULE) is NEVER mutated. Overrides are held in a
+// small in-memory registry, scoped to a single calendar date, and applied on
+// read for that date only. Expired automatically when the date changes.
+// ---------------------------------------------------------------------------
+
+export function localDateKey(d: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+let TEMP_DATE = "";
+let TEMP_MAP = new Map<string, string>();
+let tempVersion = 0;
+const tempListeners = new Set<() => void>();
+
+export function setTempOverrides(
+  date: string,
+  entries: { class_id: string; period: number; subject: string }[],
+) {
+  TEMP_DATE = date;
+  TEMP_MAP = new Map(entries.map((e) => [`${e.class_id}|${e.period}`, e.subject]));
+  tempVersion++;
+  tempListeners.forEach((l) => l());
+}
+
+export function subscribeTempOverrides(l: () => void) {
+  tempListeners.add(l);
+  return () => tempListeners.delete(l);
+}
+export function getTempVersion() {
+  return tempVersion;
+}
+export function hasActiveTempOverrides(now: Date = new Date()) {
+  return TEMP_DATE === localDateKey(now) && TEMP_MAP.size > 0;
+}
+export function activeTempCount(now: Date = new Date()) {
+  return hasActiveTempOverrides(now) ? TEMP_MAP.size : 0;
+}
+
+/** Override subject for a day+class+period, but only when that day is today. */
+function tempSubjectFor(day: DayCode, cls: ClassId, p: PeriodNum): string | null {
+  if (!TEMP_MAP.size) return null;
+  const now = new Date();
+  if (TEMP_DATE !== localDateKey(now)) return null;
+  if (jsDayToCode(now.getDay()) !== day) return null;
+  return TEMP_MAP.get(`${cls}|${p}`) ?? null;
+}
+
+function applyTemp(day: DayCode, p: PeriodNum, slot: Slot | undefined | null): Slot | null {
+  if (!slot) return slot ?? null;
+  const sub = tempSubjectFor(day, slot.className, p);
+  if (!sub || sub === slot.subject) return slot;
+  return { ...slot, subject: sub, subjectSpecified: true, temporary: true };
+}
+
 /** Single source of truth for what a class has in a given day+period. */
 export function getClassCell(day: DayCode, cls: ClassId, p: PeriodNum): ClassCell {
-  const slot = SCHEDULE[day][p].find((s) => s.className === cls);
+  const slot = applyTemp(day, p, SCHEDULE[day][p].find((s) => s.className === cls));
   if (slot) return { kind: "slot", slot };
   if (CLASS_BREAKS[day][cls] === p) return { kind: "break" };
   const label = CLASS_ACTIVITIES[day][cls][p];
@@ -665,8 +724,7 @@ export function getTeacherSchedule(code: string): Record<DayCode, Record<PeriodN
   for (const d of DAYS) {
     out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      const slot = SCHEDULE[d][p].find((s) => s.teacher === code) || null;
-      out[d][p] = slot;
+      out[d][p] = applyTemp(d, p, SCHEDULE[d][p].find((s) => s.teacher === code));
     }
   }
   return out;
@@ -677,8 +735,7 @@ export function getClassSchedule(cls: ClassId): Record<DayCode, Record<PeriodNum
   for (const d of DAYS) {
     out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      const slot = SCHEDULE[d][p].find((s) => s.className === cls) || null;
-      out[d][p] = slot;
+      out[d][p] = applyTemp(d, p, SCHEDULE[d][p].find((s) => s.className === cls));
     }
   }
   return out;
@@ -774,7 +831,7 @@ export function getCurrentStatus(code: string, now: Date = new Date()): NowStatu
   const mins = now.getHours() * 60 + now.getMinutes();
   for (const p of PERIOD_TIMES) {
     if (mins >= p.startMin && mins < p.endMin) {
-      const slot = SCHEDULE[day][p.period].find((s) => s.teacher === code);
+      const slot = applyTemp(day, p.period, SCHEDULE[day][p.period].find((s) => s.teacher === code));
       return slot ? { kind: "teaching", slot, period: p } : { kind: "free", period: p };
     }
   }
@@ -805,7 +862,7 @@ export function getNextPeriodForTeacher(code: string, now: Date = new Date()): {
   const mins = now.getHours() * 60 + now.getMinutes();
   for (const p of PERIOD_TIMES) {
     if (p.startMin > mins) {
-      const slot = SCHEDULE[day][p.period].find((s) => s.teacher === code);
+      const slot = applyTemp(day, p.period, SCHEDULE[day][p.period].find((s) => s.teacher === code));
       if (slot) return { period: p, slot };
     }
   }

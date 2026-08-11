@@ -23,6 +23,7 @@ import {
   type DayCode,
   type Teacher,
 } from "@/data/timetable";
+import { useTempVersion } from "@/lib/temp-timetable";
 import { useNow } from "@/lib/use-now";
 import { AskQuestionCard } from "@/components/AskQuestionCard";
 import { setPreferredTeacher } from "@/lib/preferred-teacher";
@@ -68,6 +69,7 @@ type Tab = "overview" | "today" | "weekly" | "syllabus" | "syllabus_pdf";
 function TeacherPage() {
   const { code } = Route.useParams();
   const teacher = TEACHER_BY_CODE[code]!;
+  useTempVersion();
   const now = useNow();
   const sched = getTeacherSchedule(code);
   const stats = getTeacherStats(code);

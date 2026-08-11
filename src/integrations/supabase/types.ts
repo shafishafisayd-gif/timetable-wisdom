@@ -237,6 +237,48 @@ export type Database = {
         }
         Relationships: []
       }
+      temp_timetable: {
+        Row: {
+          class_id: string
+          created_at: string
+          day_code: string
+          id: string
+          original_subject: string | null
+          override_date: string
+          period: number
+          subject: string
+          teacher_code: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          class_id: string
+          created_at?: string
+          day_code: string
+          id?: string
+          original_subject?: string | null
+          override_date: string
+          period: number
+          subject: string
+          teacher_code?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          class_id?: string
+          created_at?: string
+          day_code?: string
+          id?: string
+          original_subject?: string | null
+          override_date?: string
+          period?: number
+          subject?: string
+          teacher_code?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
