@@ -52,7 +52,7 @@ export const Route = createFileRoute("/temp-timetable")({
       },
     ],
   }),
-  component: TempTimetablePage;
+  component: TempTimetablePage,
 });
 
 type EditTarget = {
