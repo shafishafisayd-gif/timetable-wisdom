@@ -358,7 +358,7 @@ function TempTimetablePage() {
                 <Info label="Class" value={edit.cls} />
                 <Info label="Period" value={PERIOD_LABELS[edit.period]} />
                 <Info label="Time" value={edit.time} />
-                <Info label="Teacher" value={TEACHER_BY_CODE[edit.teacher]?.name ?? edit.teacher} />
+                <Info label="Teacher" value={TEACHER_BY_CODE[edit.teacher]?.fullName ?? edit.teacher} />
                 <Info label="Current subject" value={edit.currentSubject} />
               </div>
 
