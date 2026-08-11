@@ -646,9 +646,66 @@ export type ClassCell =
   | { kind: "activity"; label: string }
   | { kind: "free" };
 
+// ---------------------------------------------------------------------------
+// TEMPORARY OVERRIDE LAYER
+// Permanent timetable (SCHEDULE) is NEVER mutated. Overrides are held in a
+// small in-memory registry, scoped to a single calendar date, and applied on
+// read for that date only. Expired automatically when the date changes.
+// ---------------------------------------------------------------------------
+
+export function localDateKey(d: Date = new Date()): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+let TEMP_DATE = "";
+let TEMP_MAP = new Map<string, string>();
+let tempVersion = 0;
+const tempListeners = new Set<() => void>();
+
+export function setTempOverrides(
+  date: string,
+  entries: { class_id: string; period: number; subject: string }[],
+) {
+  TEMP_DATE = date;
+  TEMP_MAP = new Map(entries.map((e) => [`${e.class_id}|${e.period}`, e.subject]));
+  tempVersion++;
+  tempListeners.forEach((l) => l());
+}
+
+export function subscribeTempOverrides(l: () => void) {
+  tempListeners.add(l);
+  return () => tempListeners.delete(l);
+}
+export function getTempVersion() {
+  return tempVersion;
+}
+export function hasActiveTempOverrides(now: Date = new Date()) {
+  return TEMP_DATE === localDateKey(now) && TEMP_MAP.size > 0;
+}
+export function activeTempCount(now: Date = new Date()) {
+  return hasActiveTempOverrides(now) ? TEMP_MAP.size : 0;
+}
+
+/** Override subject for a day+class+period, but only when that day is today. */
+function tempSubjectFor(day: DayCode, cls: ClassId, p: PeriodNum): string | null {
+  if (!TEMP_MAP.size) return null;
+  const now = new Date();
+  if (TEMP_DATE !== localDateKey(now)) return null;
+  if (jsDayToCode(now.getDay()) !== day) return null;
+  return TEMP_MAP.get(`${cls}|${p}`) ?? null;
+}
+
+function applyTemp(day: DayCode, p: PeriodNum, slot: Slot | undefined | null): Slot | null {
+  if (!slot) return slot ?? null;
+  const sub = tempSubjectFor(day, slot.className, p);
+  if (!sub || sub === slot.subject) return slot;
+  return { ...slot, subject: sub, subjectSpecified: true, temporary: true };
+}
+
 /** Single source of truth for what a class has in a given day+period. */
 export function getClassCell(day: DayCode, cls: ClassId, p: PeriodNum): ClassCell {
-  const slot = SCHEDULE[day][p].find((s) => s.className === cls);
+  const slot = applyTemp(day, p, SCHEDULE[day][p].find((s) => s.className === cls));
   if (slot) return { kind: "slot", slot };
   if (CLASS_BREAKS[day][cls] === p) return { kind: "break" };
   const label = CLASS_ACTIVITIES[day][cls][p];
