@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Coffee } from "lucide-react";
+import { CalendarClock, ChevronLeft, ChevronRight, Coffee } from "lucide-react";
 import {
   DAYS,
   DAY_LABELS,
@@ -15,6 +15,7 @@ import {
   type DayCode,
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
+import { useTempVersion } from "@/lib/temp-timetable";
 
 export const Route = createFileRoute("/timetable")({
   head: () => ({
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/timetable")({
 });
 
 function OverallTimetable() {
+  useTempVersion();
   const now = useNow();
   const today = jsDayToCode(now.getDay()) ?? "SAT";
   const [day, setDay] = useState<DayCode>(today);
@@ -40,6 +42,13 @@ function OverallTimetable() {
       <div className="card-soft p-4">
         <h1 className="text-xl font-bold text-foreground">Overall Weekly Timetable</h1>
         <p className="mt-0.5 text-sm text-muted-foreground">Tap a period to see teacher details. Swipe the table sideways to see more.</p>
+
+        <Link
+          to="/temp-timetable"
+          className="mt-3 inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition active:scale-95"
+        >
+          <CalendarClock className="h-4 w-4" /> Temp Timetable
+        </Link>
 
         <div className="mt-3 flex items-center gap-2">
           <button
@@ -163,13 +172,18 @@ function OverallTimetable() {
                         <Link
                           to="/teachers/$code"
                           params={{ code: slot.teacher }}
-                          className="block min-w-[92px] rounded-lg px-2 py-1.5 text-[11px] font-semibold shadow-sm transition active:scale-95"
+                          className={`block min-w-[92px] rounded-lg px-2 py-1.5 text-[11px] font-semibold shadow-sm transition active:scale-95 ${slot.temporary ? "ring-2 ring-amber-500 ring-offset-1 ring-offset-card" : ""}`}
                           style={{ backgroundColor: color, color: textOn(color) }}
                         >
                           <div className={`font-bold leading-tight ${slot.subjectSpecified ? "truncate" : "italic opacity-80"}`}>
                             {slot.subjectSpecified ? slot.subject : "Subject not specified"}
                           </div>
-                          <div className="opacity-90 leading-tight">{slot.teacher}</div>
+                          <div className="flex items-center gap-1 leading-tight opacity-90">
+                            <span>{slot.teacher}</span>
+                            {slot.temporary && (
+                              <span className="rounded bg-amber-500 px-1 text-[8px] font-bold text-white">TEMP</span>
+                            )}
+                          </div>
                         </Link>
                       </td>
                     );

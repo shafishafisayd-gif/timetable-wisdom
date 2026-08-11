@@ -6,8 +6,10 @@ import {
   type Teacher,
 } from "@/data/timetable";
 import { useNow } from "@/lib/use-now";
+import { useTempVersion } from "@/lib/temp-timetable";
 
 export function AskQuestionCard({ teacher }: { teacher: Teacher }) {
+  useTempVersion();
   const now = useNow();
   const status = getCurrentStatus(teacher.code, now);
   const navigate = useNavigate();
@@ -64,6 +66,9 @@ export function AskQuestionCard({ teacher }: { teacher: Teacher }) {
         <div className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <div className="text-lg font-bold text-foreground">{subject}</div>
           <div className="text-sm text-muted-foreground">· Class {classId} · Now</div>
+          {teaching.slot.temporary && (
+            <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white">TEMP TODAY</span>
+          )}
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
           Opens the Question Session — a random student is locked in until you record their result.
