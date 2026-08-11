@@ -115,3 +115,28 @@ export function useTempTimetableSync() {
     };
   }, [qc]);
 }
+
+export async function upsertTempOverride(entry: {
+  override_date: string;
+  day_code: DayCode;
+  class_id: ClassId;
+  period: PeriodNum;
+  subject: string;
+  teacher_code: string | null;
+  original_subject: string | null;
+}) {
+  const { error } = await supabase
+    .from("temp_timetable")
+    .upsert(entry, { onConflict: "override_date,class_id,period" });
+  if (error) throw error;
+}
+
+export async function deleteTempOverride(date: string, classId: string, period: number) {
+  const { error } = await supabase
+    .from("temp_timetable")
+    .delete()
+    .eq("override_date", date)
+    .eq("class_id", classId)
+    .eq("period", period);
+  if (error) throw error;
+}
