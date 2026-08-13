@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, BookOpen, CheckCircle2, Circle, Clock, Users } from "lucide-react";
 import {
   TEACHERS,
-  TEACHER_BY_CODE,
   getTeacherStats,
   getTeacherSchedule,
   DAYS,
