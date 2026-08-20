@@ -549,7 +549,9 @@ const CELLS: RawCell[] = [
   ["THU","S7",9,"AJR","Manthiq"],
 ];
 
+const CLASS_BREAK_CELLS: [DayCode, ClassId, PeriodNum][] = [
   ["SAT","S1",0],
+
   ["SAT","S2",0],
   ["SAT","S3",1],
   ["SAT","S4",0],
