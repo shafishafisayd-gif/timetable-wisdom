@@ -595,7 +595,9 @@ const CLASS_BREAK_CELLS: [DayCode, ClassId, PeriodNum][] = [
   ["THU","S7",0],
 ];
 
+const ACTIVITY_CELLS: [DayCode, ClassId, PeriodNum, string][] = [
   ["SAT","S1",1,"Class Samajam"],
+
   ["SAT","S2",1,"Class Samajam"],
   ["SUN","S1",8,"Samajam Prep"],
   ["SUN","S1",9,"Samajam Prep"],
