@@ -275,52 +275,61 @@ function TempTimetablePage() {
                     }
                     const p = col.period.period;
                     const permanent = SCHEDULE[day][p].find((s) => s.className === cls);
+                    const activity = CLASS_ACTIVITIES[day][cls][p];
+                    const isBreak = !permanent && CLASS_BREAKS[day][cls] === p;
+                    const statusLabel = permanent
+                      ? permanent.subjectSpecified
+                        ? permanent.subject
+                        : "Subject not specified"
+                      : isBreak
+                        ? "BREAK"
+                        : (activity ?? "FREE");
 
-                    if (!permanent) {
-                      if (CLASS_BREAKS[day][cls] === p) {
-                        return (
-                          <td key={`c-p-${cls}-${i}`} className="align-top">
-                            <div className="min-w-[92px] rounded-lg bg-primary/10 px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-primary/80">
-                              Break
-                            </div>
-                          </td>
-                        );
-                      }
-                      const label = CLASS_ACTIVITIES[day][cls][p];
+                    const override = overrideMap.get(`${cls}|${p}`);
+                    const subject = override?.subject ?? permanent?.subject ?? "";
+                    const teacherCode = override?.teacher ?? permanent?.teacher ?? "";
+                    const teacher = TEACHER_BY_CODE[teacherCode];
+                    const color = override || permanent ? (teacher?.color ?? "#64748B") : "";
+
+                    const openEditor = () => {
+                      setChoice(override?.subject ?? permanent?.subject ?? "");
+                      setChoiceTeacher(teacherCode);
+                      setEdit({
+                        cls,
+                        period: p,
+                        time: `${formatTime12(col.period.start)} – ${formatTime12(col.period.end)}`,
+                        teacher: permanent?.teacher ?? "",
+                        permanentSubject: permanent?.subject ?? "",
+                        currentSubject: override?.subject ?? statusLabel,
+                        statusLabel,
+                        isNonTeaching: !permanent,
+                      });
+                    };
+
+                    // Break / activity / free cell with no override — still clickable.
+                    if (!permanent && !override) {
                       return (
                         <td key={`c-p-${cls}-${i}`} className="align-top">
-                          <div
-                            className={`min-w-[92px] rounded-lg px-2 py-2 text-center text-[10px] font-semibold ${
-                              label
-                                ? "bg-secondary text-secondary-foreground"
-                                : "bg-secondary/40 font-medium text-muted-foreground"
+                          <button
+                            onClick={openEditor}
+                            className={`block w-full min-w-[92px] rounded-lg px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wide transition active:scale-95 ${
+                              isBreak
+                                ? "bg-primary/10 text-primary/80"
+                                : activity
+                                  ? "bg-secondary text-secondary-foreground"
+                                  : "bg-secondary/40 font-medium text-muted-foreground"
                             }`}
                           >
-                            {label ?? "FREE"}
-                          </div>
+                            {isBreak ? "Break" : (activity ?? "FREE")}
+                          </button>
                         </td>
                       );
                     }
 
-                    const override = overrideMap.get(`${cls}|${p}`);
-                    const subject = override ?? permanent.subject;
-                    const teacher = TEACHER_BY_CODE[permanent.teacher];
-                    const color = teacher?.color ?? "#64748B";
-
                     return (
                       <td key={`c-p-${cls}-${i}`} className="align-top">
                         <button
-                          onClick={() => {
-                            setChoice(subject);
-                            setEdit({
-                              cls,
-                              period: p,
-                              time: `${formatTime12(col.period.start)} – ${formatTime12(col.period.end)}`,
-                              teacher: permanent.teacher,
-                              permanentSubject: permanent.subject,
-                              currentSubject: subject,
-                            });
-                          }}
+                          onClick={openEditor}
                           className={`block w-full min-w-[92px] rounded-lg px-2 py-1.5 text-left text-[11px] font-semibold shadow-sm transition active:scale-95 ${
                             override ? "ring-2 ring-amber-500 ring-offset-1 ring-offset-card" : ""
                           }`}
@@ -328,13 +337,13 @@ function TempTimetablePage() {
                         >
                           <div
                             className={`font-bold leading-tight ${
-                              permanent.subjectSpecified || override ? "truncate" : "italic opacity-80"
+                              permanent?.subjectSpecified || override ? "truncate" : "italic opacity-80"
                             }`}
                           >
-                            {permanent.subjectSpecified || override ? subject : "Subject not specified"}
+                            {permanent?.subjectSpecified || override ? subject : "Subject not specified"}
                           </div>
                           <div className="flex items-center gap-1 leading-tight opacity-90">
-                            <span>{permanent.teacher}</span>
+                            <span>{teacherCode || "—"}</span>
                             {override && (
                               <span className="rounded bg-amber-500 px-1 text-[8px] font-bold text-white">
                                 TEMP
