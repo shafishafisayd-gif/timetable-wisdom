@@ -59,9 +59,14 @@ type EditTarget = {
   cls: ClassId;
   period: PeriodNum;
   time: string;
+  /** Permanent teacher for the cell, empty for break / activity / free cells. */
   teacher: string;
   permanentSubject: string;
   currentSubject: string;
+  /** Permanent status label shown in the dialog. */
+  statusLabel: string;
+  /** True when the permanent timetable has no teaching slot here. */
+  isNonTeaching: boolean;
 };
 
 function TempTimetablePage() {
