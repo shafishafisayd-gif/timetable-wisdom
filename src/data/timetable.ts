@@ -808,7 +808,7 @@ export interface TeacherStats {
 }
 
 export function getTeacherStats(code: string): TeacherStats {
-  const sched = getTeacherSchedule(code);
+  const sched = getTeacherSchedule(code, false);
   let total = 0;
   let specified = 0;
   const classes = new Set<ClassId>();

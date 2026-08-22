@@ -44,14 +44,14 @@ const PERIOD_MIN = Object.fromEntries(
 ) as Record<number, number>;
 
 function hoursFor(code: string) {
-  const sched = getTeacherSchedule(code);
+  const sched = getTeacherSchedule(code, false);
   let min = 0;
   for (const d of DAYS) for (const p of PERIODS) if (sched[d][p]) min += PERIOD_MIN[p] ?? 40;
   return Math.round((min / 60) * 10) / 10;
 }
 
 function dayPeriods(code: string) {
-  const sched = getTeacherSchedule(code);
+  const sched = getTeacherSchedule(code, false);
   return DAYS.map((d) => ({
     day: d as DayCode,
     labels: PERIODS.filter((p) => sched[d][p]).map((p) => PERIOD_LABELS[p]),
@@ -214,7 +214,7 @@ function TeacherDetail({
   onBack: () => void;
 }) {
   const { teacher, stats, hours, prog } = entry;
-  const sched = getTeacherSchedule(teacher.code);
+  const sched = getTeacherSchedule(teacher.code, false);
 
   // Class-wise subject breakdown (only explicitly specified subjects)
   const byClass = useMemo(() => {
