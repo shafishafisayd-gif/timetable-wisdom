@@ -785,7 +785,7 @@ export function getClassSchedule(cls: ClassId): Record<DayCode, Record<PeriodNum
   for (const d of DAYS) {
     out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      out[d][p] = applyTemp(d, p, SCHEDULE[d][p].find((s) => s.className === cls));
+      out[d][p] = effectiveSlots(d, p).find((s) => s.className === cls) ?? null;
     }
   }
   return out;
