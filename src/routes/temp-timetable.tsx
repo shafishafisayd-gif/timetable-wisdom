@@ -81,18 +81,22 @@ function TempTimetablePage() {
   });
 
   const overrideMap = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const o of overridesQ.data ?? []) m.set(`${o.class_id}|${o.period}`, o.subject);
+    const m = new Map<string, { subject: string; teacher: string | null }>();
+    for (const o of overridesQ.data ?? [])
+      m.set(`${o.class_id}|${o.period}`, { subject: o.subject, teacher: o.teacher_code });
     return m;
   }, [overridesQ.data]);
 
   const [edit, setEdit] = useState<EditTarget | null>(null);
   const [choice, setChoice] = useState<string>("");
+  const [choiceTeacher, setChoiceTeacher] = useState<string>("");
 
   const applyM = useMutation({
-    mutationFn: async (t: EditTarget & { subject: string }) => {
+    mutationFn: async (t: EditTarget & { subject: string; teacherCode: string }) => {
       if (!day) return;
-      if (t.subject === t.permanentSubject) {
+      const backToPermanent =
+        !t.isNonTeaching && t.subject === t.permanentSubject && t.teacherCode === t.teacher;
+      if (backToPermanent || !t.subject) {
         await deleteTempOverride(date, t.cls, t.period);
         return;
       }
@@ -102,8 +106,8 @@ function TempTimetablePage() {
         class_id: t.cls,
         period: t.period,
         subject: t.subject,
-        teacher_code: t.teacher,
-        original_subject: t.permanentSubject,
+        teacher_code: t.teacherCode || null,
+        original_subject: t.isNonTeaching ? t.statusLabel : t.permanentSubject,
       });
     },
     onSuccess: () => {
