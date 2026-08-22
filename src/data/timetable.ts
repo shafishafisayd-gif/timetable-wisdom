@@ -759,6 +759,13 @@ export { SCHEDULE };
 
 // ---------- Derived helpers ----------
 
+/** Every slot in effect for a day+period, temporary overrides applied. */
+function effectiveSlots(day: DayCode, p: PeriodNum, includeTemp = true): Slot[] {
+  if (!includeTemp) return SCHEDULE[day][p];
+  const base = SCHEDULE[day][p].map((s) => applyTemp(day, p, s)!);
+  return [...base, ...extraTempSlots(day, p)];
+}
+
 export function getTeacherSchedule(
   code: string,
   includeTemp = true,
@@ -767,17 +774,7 @@ export function getTeacherSchedule(
   for (const d of DAYS) {
     out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      const permanent = SCHEDULE[d][p].find((s) => s.teacher === code) ?? null;
-      if (!includeTemp) {
-        out[d][p] = permanent;
-        continue;
-      }
-      const applied = applyTemp(d, p, permanent);
-      // A permanent slot can be handed to another teacher for today.
-      out[d][p] =
-        applied && applied.teacher !== code
-          ? null
-          : (applied ?? extraTempSlots(d, p).find((s) => s.teacher === code) ?? null);
+      out[d][p] = effectiveSlots(d, p, includeTemp).find((s) => s.teacher === code) ?? null;
     }
   }
   return out;
