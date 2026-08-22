@@ -220,8 +220,8 @@ function TempTimetablePage() {
 
       <div className="card-soft p-2 sm:p-3">
         <div
-          className="overflow-x-auto overscroll-x-contain rounded-xl"
-          style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+          className="w-full max-w-full overflow-x-auto rounded-xl"
+          style={{ touchAction: "pan-x pan-y", WebkitOverflowScrolling: "touch" }}
         >
           <table className="w-full min-w-max border-separate border-spacing-1">
             <thead>
