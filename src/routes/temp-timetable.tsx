@@ -59,9 +59,14 @@ type EditTarget = {
   cls: ClassId;
   period: PeriodNum;
   time: string;
+  /** Permanent teacher for the cell, empty for break / activity / free cells. */
   teacher: string;
   permanentSubject: string;
   currentSubject: string;
+  /** Permanent status label shown in the dialog. */
+  statusLabel: string;
+  /** True when the permanent timetable has no teaching slot here. */
+  isNonTeaching: boolean;
 };
 
 function TempTimetablePage() {
@@ -76,18 +81,22 @@ function TempTimetablePage() {
   });
 
   const overrideMap = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const o of overridesQ.data ?? []) m.set(`${o.class_id}|${o.period}`, o.subject);
+    const m = new Map<string, { subject: string; teacher: string | null }>();
+    for (const o of overridesQ.data ?? [])
+      m.set(`${o.class_id}|${o.period}`, { subject: o.subject, teacher: o.teacher_code });
     return m;
   }, [overridesQ.data]);
 
   const [edit, setEdit] = useState<EditTarget | null>(null);
   const [choice, setChoice] = useState<string>("");
+  const [choiceTeacher, setChoiceTeacher] = useState<string>("");
 
   const applyM = useMutation({
-    mutationFn: async (t: EditTarget & { subject: string }) => {
+    mutationFn: async (t: EditTarget & { subject: string; teacherCode: string }) => {
       if (!day) return;
-      if (t.subject === t.permanentSubject) {
+      const backToPermanent =
+        !t.isNonTeaching && t.subject === t.permanentSubject && t.teacherCode === t.teacher;
+      if (backToPermanent || !t.subject) {
         await deleteTempOverride(date, t.cls, t.period);
         return;
       }
@@ -97,8 +106,8 @@ function TempTimetablePage() {
         class_id: t.cls,
         period: t.period,
         subject: t.subject,
-        teacher_code: t.teacher,
-        original_subject: t.permanentSubject,
+        teacher_code: t.teacherCode || null,
+        original_subject: t.isNonTeaching ? t.statusLabel : t.permanentSubject,
       });
     },
     onSuccess: () => {
@@ -211,8 +220,8 @@ function TempTimetablePage() {
 
       <div className="card-soft p-2 sm:p-3">
         <div
-          className="overflow-x-auto overscroll-x-contain rounded-xl"
-          style={{ touchAction: "pan-x", WebkitOverflowScrolling: "touch" }}
+          className="w-full max-w-full overflow-x-auto rounded-xl"
+          style={{ touchAction: "pan-x pan-y", WebkitOverflowScrolling: "touch" }}
         >
           <table className="w-full min-w-max border-separate border-spacing-1">
             <thead>
@@ -266,52 +275,61 @@ function TempTimetablePage() {
                     }
                     const p = col.period.period;
                     const permanent = SCHEDULE[day][p].find((s) => s.className === cls);
+                    const activity = CLASS_ACTIVITIES[day][cls][p];
+                    const isBreak = !permanent && CLASS_BREAKS[day][cls] === p;
+                    const statusLabel = permanent
+                      ? permanent.subjectSpecified
+                        ? permanent.subject
+                        : "Subject not specified"
+                      : isBreak
+                        ? "BREAK"
+                        : (activity ?? "FREE");
 
-                    if (!permanent) {
-                      if (CLASS_BREAKS[day][cls] === p) {
-                        return (
-                          <td key={`c-p-${cls}-${i}`} className="align-top">
-                            <div className="min-w-[92px] rounded-lg bg-primary/10 px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wide text-primary/80">
-                              Break
-                            </div>
-                          </td>
-                        );
-                      }
-                      const label = CLASS_ACTIVITIES[day][cls][p];
+                    const override = overrideMap.get(`${cls}|${p}`);
+                    const subject = override?.subject ?? permanent?.subject ?? "";
+                    const teacherCode = override?.teacher ?? permanent?.teacher ?? "";
+                    const teacher = TEACHER_BY_CODE[teacherCode];
+                    const color = override || permanent ? (teacher?.color ?? "#64748B") : "";
+
+                    const openEditor = () => {
+                      setChoice(override?.subject ?? permanent?.subject ?? "");
+                      setChoiceTeacher(teacherCode);
+                      setEdit({
+                        cls,
+                        period: p,
+                        time: `${formatTime12(col.period.start)} – ${formatTime12(col.period.end)}`,
+                        teacher: permanent?.teacher ?? "",
+                        permanentSubject: permanent?.subject ?? "",
+                        currentSubject: override?.subject ?? statusLabel,
+                        statusLabel,
+                        isNonTeaching: !permanent,
+                      });
+                    };
+
+                    // Break / activity / free cell with no override — still clickable.
+                    if (!permanent && !override) {
                       return (
                         <td key={`c-p-${cls}-${i}`} className="align-top">
-                          <div
-                            className={`min-w-[92px] rounded-lg px-2 py-2 text-center text-[10px] font-semibold ${
-                              label
-                                ? "bg-secondary text-secondary-foreground"
-                                : "bg-secondary/40 font-medium text-muted-foreground"
+                          <button
+                            onClick={openEditor}
+                            className={`block w-full min-w-[92px] rounded-lg px-2 py-2 text-center text-[10px] font-semibold uppercase tracking-wide transition active:scale-95 ${
+                              isBreak
+                                ? "bg-primary/10 text-primary/80"
+                                : activity
+                                  ? "bg-secondary text-secondary-foreground"
+                                  : "bg-secondary/40 font-medium text-muted-foreground"
                             }`}
                           >
-                            {label ?? "FREE"}
-                          </div>
+                            {isBreak ? "Break" : (activity ?? "FREE")}
+                          </button>
                         </td>
                       );
                     }
 
-                    const override = overrideMap.get(`${cls}|${p}`);
-                    const subject = override ?? permanent.subject;
-                    const teacher = TEACHER_BY_CODE[permanent.teacher];
-                    const color = teacher?.color ?? "#64748B";
-
                     return (
                       <td key={`c-p-${cls}-${i}`} className="align-top">
                         <button
-                          onClick={() => {
-                            setChoice(subject);
-                            setEdit({
-                              cls,
-                              period: p,
-                              time: `${formatTime12(col.period.start)} – ${formatTime12(col.period.end)}`,
-                              teacher: permanent.teacher,
-                              permanentSubject: permanent.subject,
-                              currentSubject: subject,
-                            });
-                          }}
+                          onClick={openEditor}
                           className={`block w-full min-w-[92px] rounded-lg px-2 py-1.5 text-left text-[11px] font-semibold shadow-sm transition active:scale-95 ${
                             override ? "ring-2 ring-amber-500 ring-offset-1 ring-offset-card" : ""
                           }`}
@@ -319,13 +337,13 @@ function TempTimetablePage() {
                         >
                           <div
                             className={`font-bold leading-tight ${
-                              permanent.subjectSpecified || override ? "truncate" : "italic opacity-80"
+                              permanent?.subjectSpecified || override ? "truncate" : "italic opacity-80"
                             }`}
                           >
-                            {permanent.subjectSpecified || override ? subject : "Subject not specified"}
+                            {permanent?.subjectSpecified || override ? subject : "Subject not specified"}
                           </div>
                           <div className="flex items-center gap-1 leading-tight opacity-90">
-                            <span>{permanent.teacher}</span>
+                            <span>{teacherCode || "—"}</span>
                             {override && (
                               <span className="rounded bg-amber-500 px-1 text-[8px] font-bold text-white">
                                 TEMP
@@ -344,9 +362,11 @@ function TempTimetablePage() {
       </div>
 
       <Dialog open={!!edit} onOpenChange={(o) => !o && setEdit(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-h-[85dvh] max-w-sm overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Change subject for today</DialogTitle>
+            <DialogTitle>
+              {edit?.isNonTeaching ? "Assign a subject for today" : "Change subject for today"}
+            </DialogTitle>
             <DialogDescription>
               This override applies only to {dateLabel}. The permanent timetable stays unchanged.
             </DialogDescription>
@@ -358,24 +378,30 @@ function TempTimetablePage() {
                 <Info label="Class" value={edit.cls} />
                 <Info label="Period" value={PERIOD_LABELS[edit.period]} />
                 <Info label="Time" value={edit.time} />
-                <Info label="Teacher" value={TEACHER_BY_CODE[edit.teacher]?.fullName ?? edit.teacher} />
-                <Info label="Current subject" value={edit.currentSubject} />
+                <Info label="Current status" value={edit.statusLabel} />
+                <Info label="Today" value={edit.currentSubject || "—"} />
               </div>
 
               <div>
                 <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Replacement subject (valid for {edit.cls})
+                  {edit.isNonTeaching ? "Subject to assign" : "Replacement subject"} (valid for{" "}
+                  {edit.cls})
                 </label>
                 <select
                   value={choice}
                   onChange={(e) => setChoice(e.target.value)}
                   className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                 >
-                  <option value={edit.permanentSubject}>
-                    {edit.permanentSubject} (permanent)
+                  <option value="">
+                    {edit.isNonTeaching ? `Keep ${edit.statusLabel}` : "— select —"}
                   </option>
+                  {!edit.isNonTeaching && (
+                    <option value={edit.permanentSubject}>
+                      {edit.permanentSubject} (permanent)
+                    </option>
+                  )}
                   {subjectsForClass(edit.cls)
-                    .filter((s) => s !== edit.permanentSubject)
+                    .filter((s) => edit.isNonTeaching || s !== edit.permanentSubject)
                     .map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -387,6 +413,25 @@ function TempTimetablePage() {
                   selected.
                 </p>
               </div>
+
+              <div>
+                <label className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Teacher for today
+                </label>
+                <select
+                  value={choiceTeacher}
+                  onChange={(e) => setChoiceTeacher(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">— select teacher —</option>
+                  {TEACHERS.map((t) => (
+                    <option key={t.code} value={t.code}>
+                      {t.code} · {t.fullName}
+                      {t.code === edit.teacher ? " (permanent)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           )}
           <DialogFooter className="gap-2">
@@ -397,8 +442,10 @@ function TempTimetablePage() {
               Cancel
             </button>
             <button
-              onClick={() => edit && applyM.mutate({ ...edit, subject: choice })}
-              disabled={applyM.isPending}
+              onClick={() =>
+                edit && applyM.mutate({ ...edit, subject: choice, teacherCode: choiceTeacher })
+              }
+              disabled={applyM.isPending || (!!choice && !choiceTeacher)}
               className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-50"
             >
               Apply

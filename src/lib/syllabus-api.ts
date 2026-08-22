@@ -77,7 +77,7 @@ export function buildAcademicMonths(startMonth: number, endMonth: number): Acade
 export function getTeacherClassSubjects(
   code: string,
 ): { className: ClassId; subject: string; weekly: number }[] {
-  const sched = getTeacherSchedule(code);
+  const sched = getTeacherSchedule(code, false);
   const map = new Map<string, { className: ClassId; subject: string; weekly: number }>();
   for (const d of DAYS) {
     for (const p of PERIODS) {
