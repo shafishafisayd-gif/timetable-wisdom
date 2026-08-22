@@ -663,16 +663,22 @@ export function localDateKey(d: Date = new Date()): string {
 }
 
 let TEMP_DATE = "";
-let TEMP_MAP = new Map<string, string>();
+type TempEntry = { subject: string; teacher: string | null };
+let TEMP_MAP = new Map<string, TempEntry>();
 let tempVersion = 0;
 const tempListeners = new Set<() => void>();
 
 export function setTempOverrides(
   date: string,
-  entries: { class_id: string; period: number; subject: string }[],
+  entries: { class_id: string; period: number; subject: string; teacher_code?: string | null }[],
 ) {
   TEMP_DATE = date;
-  TEMP_MAP = new Map(entries.map((e) => [`${e.class_id}|${e.period}`, e.subject]));
+  TEMP_MAP = new Map(
+    entries.map((e) => [
+      `${e.class_id}|${e.period}`,
+      { subject: e.subject, teacher: e.teacher_code ?? null },
+    ]),
+  );
   tempVersion++;
   tempListeners.forEach((l) => l());
 }
@@ -691,25 +697,57 @@ export function activeTempCount(now: Date = new Date()) {
   return hasActiveTempOverrides(now) ? TEMP_MAP.size : 0;
 }
 
-/** Override subject for a day+class+period, but only when that day is today. */
-function tempSubjectFor(day: DayCode, cls: ClassId, p: PeriodNum): string | null {
-  if (!TEMP_MAP.size) return null;
+/** True only when the override registry applies to the given weekday today. */
+function tempActiveForDay(day: DayCode) {
+  if (!TEMP_MAP.size) return false;
   const now = new Date();
-  if (TEMP_DATE !== localDateKey(now)) return null;
-  if (jsDayToCode(now.getDay()) !== day) return null;
+  if (TEMP_DATE !== localDateKey(now)) return false;
+  return jsDayToCode(now.getDay()) === day;
+}
+
+/** Override entry for a day+class+period, but only when that day is today. */
+function tempEntryFor(day: DayCode, cls: ClassId, p: PeriodNum): TempEntry | null {
+  if (!tempActiveForDay(day)) return null;
   return TEMP_MAP.get(`${cls}|${p}`) ?? null;
 }
 
 function applyTemp(day: DayCode, p: PeriodNum, slot: Slot | undefined | null): Slot | null {
   if (!slot) return slot ?? null;
-  const sub = tempSubjectFor(day, slot.className, p);
-  if (!sub || sub === slot.subject) return slot;
-  return { ...slot, subject: sub, subjectSpecified: true, temporary: true };
+  const e = tempEntryFor(day, slot.className, p);
+  if (!e) return slot;
+  const teacher = e.teacher ?? slot.teacher;
+  if (e.subject === slot.subject && teacher === slot.teacher) return slot;
+  return { ...slot, teacher, subject: e.subject, subjectSpecified: true, temporary: true };
+}
+
+/**
+ * Temporary slots that have no permanent counterpart (break / activity / free
+ * cells that were temporarily assigned a subject for today).
+ */
+function extraTempSlots(day: DayCode, p: PeriodNum): Slot[] {
+  if (!tempActiveForDay(day)) return [];
+  const out: Slot[] = [];
+  for (const [key, e] of TEMP_MAP) {
+    const [cls, period] = key.split("|");
+    if (Number(period) !== p) continue;
+    if (SCHEDULE[day][p].some((s) => s.className === cls)) continue;
+    out.push({
+      teacher: e.teacher ?? "",
+      className: cls as ClassId,
+      subject: e.subject,
+      subjectSpecified: true,
+      temporary: true,
+    });
+  }
+  return out;
 }
 
 /** Single source of truth for what a class has in a given day+period. */
 export function getClassCell(day: DayCode, cls: ClassId, p: PeriodNum): ClassCell {
-  const slot = applyTemp(day, p, SCHEDULE[day][p].find((s) => s.className === cls));
+  const slot =
+    applyTemp(day, p, SCHEDULE[day][p].find((s) => s.className === cls)) ??
+    extraTempSlots(day, p).find((s) => s.className === cls) ??
+    null;
   if (slot) return { kind: "slot", slot };
   if (CLASS_BREAKS[day][cls] === p) return { kind: "break" };
   const label = CLASS_ACTIVITIES[day][cls][p];
@@ -721,12 +759,25 @@ export { SCHEDULE };
 
 // ---------- Derived helpers ----------
 
-export function getTeacherSchedule(code: string): Record<DayCode, Record<PeriodNum, Slot | null>> {
+export function getTeacherSchedule(
+  code: string,
+  includeTemp = true,
+): Record<DayCode, Record<PeriodNum, Slot | null>> {
   const out = {} as Record<DayCode, Record<PeriodNum, Slot | null>>;
   for (const d of DAYS) {
     out[d] = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null, 7: null, 8: null, 9: null };
     for (const p of PERIODS) {
-      out[d][p] = applyTemp(d, p, SCHEDULE[d][p].find((s) => s.teacher === code));
+      const permanent = SCHEDULE[d][p].find((s) => s.teacher === code) ?? null;
+      if (!includeTemp) {
+        out[d][p] = permanent;
+        continue;
+      }
+      const applied = applyTemp(d, p, permanent);
+      // A permanent slot can be handed to another teacher for today.
+      out[d][p] =
+        applied && applied.teacher !== code
+          ? null
+          : (applied ?? extraTempSlots(d, p).find((s) => s.teacher === code) ?? null);
     }
   }
   return out;
