@@ -9,6 +9,7 @@ import {
   PERIOD_LABELS,
   TIMETABLE_COLUMNS,
   TEACHER_BY_CODE,
+  TEACHERS,
   SCHEDULE,
   formatTime12,
   jsDayToCode,
