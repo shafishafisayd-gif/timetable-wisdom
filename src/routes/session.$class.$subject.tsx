@@ -259,7 +259,14 @@ function SessionPage() {
   };
 
   if (!teacher) {
-    return <div className="card-soft p-6 text-sm text-destructive">Unknown teacher.</div>;
+    return (
+      <div className="card-soft space-y-2 p-6 text-sm">
+        <p className="font-semibold text-foreground">Pick a teacher to start this session</p>
+        <p className="text-muted-foreground">
+          Open a question session from a teacher page or from the class page so the right teacher is attached.
+        </p>
+      </div>
+    );
   }
 
   const fg = textOn(teacher.color);
