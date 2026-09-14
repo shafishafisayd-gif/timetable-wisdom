@@ -162,7 +162,7 @@ function TeacherPage() {
           ))}
           {stats.subjectUnspecifiedPeriods > 0 && (
             <div className="flex items-center justify-between rounded-xl border border-dashed border-border px-3 py-2 text-xs">
-              <span className="font-medium italic text-muted-foreground">Subject Not Specified</span>
+              <span className="font-medium italic text-muted-foreground">Sub N/S</span>
               <span className="font-bold text-foreground">{stats.subjectUnspecifiedPeriods}</span>
             </div>
           )}
