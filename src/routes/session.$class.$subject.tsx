@@ -39,8 +39,8 @@ import {
 import { fetchSyllabusSettings } from "@/lib/syllabus-api";
 
 const searchSchema = z.object({
-  teacher: z.string(),
-  period: z.coerce.number().optional(),
+  teacher: z.string().optional().catch(undefined),
+  period: z.coerce.number().optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/session/$class/$subject")({
