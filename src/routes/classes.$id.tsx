@@ -228,7 +228,7 @@ function TimetableTab({ cls }: { cls: ClassId }) {
                       <Link to="/teachers/$code" params={{ code: slot.teacher }}
                         className={`block min-w-[92px] rounded-lg px-2 py-1.5 text-[11px] font-semibold shadow-sm ${isNow ? "ring-2 ring-primary" : ""}`}
                         style={{ backgroundColor: teacher?.color, color: teacher ? textOn(teacher.color) : "#fff" }}>
-                        <div className={slot.subjectSpecified ? "truncate font-bold" : "font-bold italic opacity-80"}>{slot.subjectSpecified ? slot.subject : "Subject not specified"}</div>
+                        <div className={slot.subjectSpecified ? "truncate font-bold" : "font-bold italic opacity-80"}>{slot.subjectSpecified ? slot.subject : "Sub N/S"}</div>
                         <div className="opacity-90">{slot.teacher}</div>
                       </Link>
                     </td>

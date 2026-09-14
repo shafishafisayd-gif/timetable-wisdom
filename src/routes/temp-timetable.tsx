@@ -281,7 +281,7 @@ function TempTimetablePage() {
                     const statusLabel = permanent
                       ? permanent.subjectSpecified
                         ? permanent.subject
-                        : "Subject not specified"
+                        : "Sub N/S"
                       : isBreak
                         ? "BREAK"
                         : (activity ?? "FREE");
@@ -341,7 +341,7 @@ function TempTimetablePage() {
                               permanent?.subjectSpecified || override ? "truncate" : "italic opacity-80"
                             }`}
                           >
-                            {permanent?.subjectSpecified || override ? subject : "Subject not specified"}
+                            {permanent?.subjectSpecified || override ? subject : "Sub N/S"}
                           </div>
                           <div className="flex items-center gap-1 leading-tight opacity-90">
                             <span>{teacherCode || "—"}</span>

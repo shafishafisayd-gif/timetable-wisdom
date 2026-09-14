@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DAYS, PERIODS, getTeacherSchedule, SUBJECT_UNSPECIFIED, type ClassId } from "@/data/timetable";
+import { DAYS, PERIODS, getTeacherSchedule, SUBJECT_UNSPECIFIED, SUBJECT_UNSPECIFIED_LEGACY, type ClassId } from "@/data/timetable";
 
 export type SyllabusStatusValue = "not_started" | "in_progress" | "completed";
 
@@ -135,7 +135,11 @@ export async function fetchSyllabusStatus(opts?: {
   subject?: string;
   academicYear?: string;
 }): Promise<SyllabusStatusRow[]> {
-  let q = supabase.from("syllabus_status").select("*").neq("subject", SUBJECT_UNSPECIFIED);
+  let q = supabase
+    .from("syllabus_status")
+    .select("*")
+    .neq("subject", SUBJECT_UNSPECIFIED)
+    .neq("subject", SUBJECT_UNSPECIFIED_LEGACY);
   if (opts?.teacherCode) q = q.eq("teacher_code", opts.teacherCode);
   if (opts?.classId) q = q.eq("class_id", opts.classId);
   if (opts?.subject) q = q.eq("subject", opts.subject);

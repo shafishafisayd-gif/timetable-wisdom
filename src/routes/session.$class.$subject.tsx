@@ -39,8 +39,8 @@ import {
 import { fetchSyllabusSettings } from "@/lib/syllabus-api";
 
 const searchSchema = z.object({
-  teacher: z.string(),
-  period: z.coerce.number().optional(),
+  teacher: z.string().optional().catch(undefined),
+  period: z.coerce.number().optional().catch(undefined),
 });
 
 export const Route = createFileRoute("/session/$class/$subject")({
@@ -63,7 +63,8 @@ type EvalMode = "answered" | "not_answered" | null;
 function SessionPage() {
   const { class: classIdParam, subject } = Route.useParams();
   const classId = classIdParam as ClassId;
-  const { teacher: teacherCode, period: periodParam } = Route.useSearch();
+  const { teacher: teacherParam, period: periodParam } = Route.useSearch();
+  const teacherCode = teacherParam ?? "";
   const teacher = TEACHER_BY_CODE[teacherCode];
   const now = useNow();
   const day = jsDayToCode(now.getDay());
@@ -258,7 +259,14 @@ function SessionPage() {
   };
 
   if (!teacher) {
-    return <div className="card-soft p-6 text-sm text-destructive">Unknown teacher.</div>;
+    return (
+      <div className="card-soft space-y-2 p-6 text-sm">
+        <p className="font-semibold text-foreground">Pick a teacher to start this session</p>
+        <p className="text-muted-foreground">
+          Open a question session from a teacher page or from the class page so the right teacher is attached.
+        </p>
+      </div>
+    );
   }
 
   const fg = textOn(teacher.color);

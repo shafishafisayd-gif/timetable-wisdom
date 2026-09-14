@@ -64,12 +64,20 @@ function buildRows(students: Student[], evals: Evaluation[]): Row[] {
       const a = v.sum / v.n;
       if (v.n >= 2 && a < worstAvg) { worstAvg = a; worstSubject = s; }
     }
+    const scored = list.filter((e) => e.status !== "absent" && typeof e.mark === "number");
+    const average = scored.length ? points / scored.length : 0;
     return {
-      student, points, asked: list.length, answered, notAnswered, absent,
+      student, points, average, asked: list.length, answered, notAnswered, absent,
       minusCount, worstSubject: worstAvg < 2 ? worstSubject : undefined,
     };
   });
-  return rows.sort((a, b) => b.points - a.points || a.student.name.localeCompare(b.student.name));
+  // Primary metric: total points. Secondary: average mark. Then name for stability.
+  return rows.sort(
+    (a, b) =>
+      b.points - a.points ||
+      b.average - a.average ||
+      a.student.name.localeCompare(b.student.name),
+  );
 }
 
 /** Competition ranking: equal points share the same rank. */
