@@ -144,7 +144,7 @@ function TeacherPage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatCard label="Total Assigned" value={stats.totalWeeklyPeriods} />
         <StatCard label="Subject Specified" value={stats.subjectSpecifiedPeriods} />
-        <StatCard label="Not Specified" value={stats.subjectUnspecifiedPeriods} />
+        <StatCard label="Sub N/S" value={stats.subjectUnspecifiedPeriods} />
         <StatCard label="Teaching Hrs" value={`${(stats.totalWeeklyPeriods * 0.67).toFixed(1)}`} />
       </div>
       )}

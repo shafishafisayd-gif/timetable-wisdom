@@ -176,7 +176,7 @@ function OverallTimetable() {
                           style={{ backgroundColor: color, color: textOn(color) }}
                         >
                           <div className={`font-bold leading-tight ${slot.subjectSpecified ? "truncate" : "italic opacity-80"}`}>
-                            {slot.subjectSpecified ? slot.subject : "Subject not specified"}
+                            {slot.subjectSpecified ? slot.subject : "Sub N/S"}
                           </div>
                           <div className="flex items-center gap-1 leading-tight opacity-90">
                             <span>{slot.teacher}</span>
