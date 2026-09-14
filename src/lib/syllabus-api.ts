@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { DAYS, PERIODS, getTeacherSchedule, SUBJECT_UNSPECIFIED, type ClassId } from "@/data/timetable";
+import { DAYS, PERIODS, getTeacherSchedule, SUBJECT_UNSPECIFIED, SUBJECT_UNSPECIFIED_LEGACY, type ClassId } from "@/data/timetable";
 
 export type SyllabusStatusValue = "not_started" | "in_progress" | "completed";
 
