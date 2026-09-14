@@ -184,7 +184,10 @@ const SCHEDULE: FullSchedule = {
 //   * nothing                    -> genuinely free
 // ---------------------------------------------------------------------------
 
-export const SUBJECT_UNSPECIFIED = "Subject Not Specified";
+/** Display label for a period where a teacher is assigned but no subject is written. */
+export const SUBJECT_UNSPECIFIED = "Sub N/S";
+/** Legacy label kept only to filter out older stored rows. */
+export const SUBJECT_UNSPECIFIED_LEGACY = "Subject Not Specified";
 
 type RawCell = [DayCode, ClassId, PeriodNum, string, string | null];
 
