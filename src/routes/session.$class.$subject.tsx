@@ -63,7 +63,8 @@ type EvalMode = "answered" | "not_answered" | null;
 function SessionPage() {
   const { class: classIdParam, subject } = Route.useParams();
   const classId = classIdParam as ClassId;
-  const { teacher: teacherCode, period: periodParam } = Route.useSearch();
+  const { teacher: teacherParam, period: periodParam } = Route.useSearch();
+  const teacherCode = teacherParam ?? "";
   const teacher = TEACHER_BY_CODE[teacherCode];
   const now = useNow();
   const day = jsDayToCode(now.getDay());
