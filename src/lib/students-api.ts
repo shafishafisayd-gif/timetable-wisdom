@@ -157,13 +157,14 @@ export async function fetchRoundState(
   classId: string,
   subject: string,
   studentCount: number,
-): Promise<{ roundNo: number; picks: RoundPick[] }> {
+): Promise<{ roundNo: number; picks: RoundPick[]; complete: boolean }> {
   const maxRound = await fetchCurrentRoundNo(teacherCode, classId, subject);
   const picks = await fetchRoundPicks(teacherCode, classId, subject, maxRound);
-  if (studentCount > 0 && picks.length >= studentCount) {
-    return { roundNo: maxRound + 1, picks: [] };
-  }
-  return { roundNo: maxRound, picks };
+  // The round stays on maxRound even once every student has been picked, so the
+  // session can show the "Round Completed" summary. Advancing only happens when
+  // the teacher explicitly starts a new round.
+  const complete = studentCount > 0 && picks.length >= studentCount;
+  return { roundNo: maxRound, picks, complete };
 }
 
 /**
