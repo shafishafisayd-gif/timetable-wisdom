@@ -24,6 +24,18 @@ function IndexRedirect() {
     }
   }, [navigate]);
   return (
-    <div className="card-soft p-10 text-center text-sm text-muted-foreground">Loading…</div>
+    <div className="flex min-h-[65vh] flex-col items-center justify-center gap-4 text-center">
+      <img
+        src="/maljaa-icon-192-v3.png"
+        alt="Malja'a College"
+        className="h-24 w-24 rounded-3xl object-cover shadow-lift"
+        width={96}
+        height={96}
+      />
+      <div>
+        <h1 className="text-lg font-bold text-foreground">Malja'a College</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Loading timetable…</p>
+      </div>
+    </div>
   );
 }
