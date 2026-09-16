@@ -102,10 +102,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" },
-      { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "icon", type: "image/png", sizes: "64x64", href: "/favicon.png" },
-      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
-      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest?v=2" },
+      { rel: "icon", type: "image/png", sizes: "64x64", href: "/maljaa-favicon-v2.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/maljaa-icon-192-v2.png" },
+      { rel: "apple-touch-icon", sizes: "180x180", href: "/maljaa-apple-touch-v2.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -167,9 +167,13 @@ function TopBar() {
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/85 backdrop-blur supports-[backdrop-filter]:bg-card/70">
       <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground font-bold">
-          M
-        </div>
+        <img
+          src="/maljaa-icon-192-v2.png"
+          alt="Malja'a College"
+          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+          width={40}
+          height={40}
+        />
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold leading-tight text-foreground">Malja'a College</div>
           <div className="truncate text-xs text-muted-foreground">Shareeath &amp; Arts · Teachers Timetable</div>
