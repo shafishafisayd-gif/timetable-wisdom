@@ -51,12 +51,12 @@ export const Route = createFileRoute("/classes/$id")({
   component: ClassDetail,
 });
 
-type Tab = "students" | "timetable" | "performance" | "syllabus";
+type Tab = "overview" | "students" | "timetable" | "performance";
 const TABS: { key: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { key: "overview", label: "Overview", icon: BookOpen },
   { key: "students", label: "Students", icon: Users },
   { key: "timetable", label: "Timetable", icon: CalendarDays },
   { key: "performance", label: "Performance", icon: TrendingUp },
-  { key: "syllabus", label: "Syllabus", icon: BookOpen },
 ];
 
 function ClassDetail() {
@@ -66,7 +66,7 @@ function ClassDetail() {
   const initialTab = ((): Tab => {
     if (highlight) return "students";
     if (tab && TABS.some((t) => t.key === (tab as Tab))) return tab as Tab;
-    return "students";
+    return "overview";
   })();
   const [active, setActive] = useState<Tab>(initialTab);
 
@@ -77,6 +77,15 @@ function ClassDetail() {
       </Link>
 
       <ClassHero cls={cls} />
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <QuickLink label="Students" icon={Users} onClick={() => setActive("students")} />
+        <QuickLink label="Timetable" icon={CalendarDays} onClick={() => setActive("timetable")} />
+        <AskQuestionLink cls={cls} />
+        <Link to="/rankings" className="flex items-center justify-center gap-1.5 rounded-xl bg-secondary/60 px-2 py-2 text-xs font-semibold text-foreground transition hover:bg-secondary">
+          <TrendingUp className="h-4 w-4" /> Rankings
+        </Link>
+      </div>
 
       <div className="card-soft flex gap-1 overflow-x-auto p-1.5">
         {TABS.map((t) => {
@@ -96,11 +105,44 @@ function ClassDetail() {
         })}
       </div>
 
+      {active === "overview" && <OverviewTab cls={cls} />}
       {active === "students" && <StudentsSection classId={cls} highlightId={highlight} />}
       {active === "timetable" && <TimetableTab cls={cls} />}
       {active === "performance" && <PerformanceTab cls={cls} />}
-      {active === "syllabus" && <SyllabusTab cls={cls} />}
     </div>
+  );
+}
+
+function QuickLink({ label, icon: Icon, onClick }: { label: string; icon: React.ComponentType<{ className?: string }>; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="flex items-center justify-center gap-1.5 rounded-xl bg-secondary/60 px-2 py-2 text-xs font-semibold text-foreground transition hover:bg-secondary">
+      <Icon className="h-4 w-4" /> {label}
+    </button>
+  );
+}
+
+/** Jumps to the first subject-specified session for this class. */
+function AskQuestionLink({ cls }: { cls: ClassId }) {
+  const first = useMemo(() => {
+    for (const d of DAYS) for (const p of PERIODS) {
+      for (const s of SCHEDULE[d][p]) {
+        if (s.className === cls && s.subjectSpecified) return { subject: s.subject, teacher: s.teacher };
+      }
+    }
+    return null;
+  }, [cls]);
+  if (!first) {
+    return <span className="flex items-center justify-center gap-1.5 rounded-xl bg-secondary/30 px-2 py-2 text-xs font-semibold text-muted-foreground"><Sparkles className="h-4 w-4" /> Ask</span>;
+  }
+  return (
+    <Link
+      to="/session/$class/$subject"
+      params={{ class: cls, subject: first.subject }}
+      search={{ teacher: first.teacher }}
+      className="flex items-center justify-center gap-1.5 rounded-xl bg-secondary/60 px-2 py-2 text-xs font-semibold text-foreground transition hover:bg-secondary"
+    >
+      <Sparkles className="h-4 w-4" /> Ask
+    </Link>
   );
 }
 
