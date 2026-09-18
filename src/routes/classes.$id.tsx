@@ -377,8 +377,7 @@ function PerformanceTab({ cls }: { cls: ClassId }) {
   const evalsQ = useQuery({ queryKey: ["evaluations", "class", cls], queryFn: () => fetchEvaluations({ classId: cls }) });
   const students = studentsQ.data ?? [];
   const evals = evalsQ.data ?? [];
-  const [showRounds, setShowRounds] = useState(false);
-  const [showMore, setShowMore] = useState(false);
+  const { subjectPeriods } = useClassTotals(cls);
 
   const rows = useMemo(() => {
     const by = new Map<string, Evaluation[]>();
@@ -390,47 +389,69 @@ function PerformanceTab({ cls }: { cls: ClassId }) {
   }, [students, evals]);
 
   const withData = rows.filter((r) => r.st.totalAsked > 0);
-  const highest = [...withData].sort((a, b) => b.st.totalPoints - a.st.totalPoints)[0];
   const avg = withData.length ? withData.reduce((a, r) => a + r.st.totalPoints, 0) / withData.length : 0;
   const needsAttention = withData.filter((r) => r.st.totalPoints < 0 || r.st.notAnswered >= 3).sort((a, b) => a.st.totalPoints - b.st.totalPoints);
-  const attnPct = evals.length ? Math.round((evals.filter((e) => e.status !== "absent").length / evals.length) * 100) : 0;
+
+  const subjectRows = useMemo(() => {
+    return Array.from(subjectPeriods.entries())
+      .map(([subject, info]) => {
+        const marks = evals
+          .filter((e) => e.subject === subject && e.status === "answered" && typeof e.mark === "number")
+          .map((e) => e.mark!);
+        return {
+          subject,
+          teacher: info.teacher,
+          periods: info.periods,
+          avg: marks.length ? marks.reduce((a, b) => a + b, 0) / marks.length : null,
+        };
+      })
+      .sort((a, b) => a.subject.localeCompare(b.subject));
+  }, [subjectPeriods, evals]);
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Kpi label="Top" value={highest ? `#${highest.s.admission_no}` : "—"} sub={highest ? `${highest.st.totalPoints.toFixed(0)} pts` : undefined} />
-        <Kpi label="Class Avg" value={avg.toFixed(1)} />
-        <Kpi label="Attendance" value={`${attnPct}%`} />
+      <div className="grid grid-cols-2 gap-2">
+        <Kpi label="Class average" value={avg.toFixed(1)} sub="points" />
         <Kpi label="Evaluated" value={`${withData.length}/${students.length}`} />
       </div>
 
       <PerformanceList
-        title="Top Scorers"
-        rows={[...withData].sort((a, b) => b.st.totalPoints - a.st.totalPoints).slice(0, 5)}
+        title="Top 3 Students"
+        rows={[...withData].sort((a, b) => b.st.totalPoints - a.st.totalPoints).slice(0, 3)}
         tone="good"
       />
       <PerformanceList
-        title="Needs Attention"
+        title="Students Needing Attention"
         rows={needsAttention.slice(0, 5)}
         tone="warn"
       />
 
-      <Disclosure open={showMore} onToggle={() => setShowMore((v) => !v)} label="More details">
-        <div className="space-y-3 pt-2">
-          <PerformanceList
-            title="Highest Minus Count"
-            rows={withData.filter((r) => r.st.notAnswered > 0).sort((a, b) => b.st.notAnswered - a.st.notAnswered).slice(0, 8)}
-            tone="warn"
-            metric={(st) => `${st.notAnswered}✗`}
-          />
+      <div className="card-soft p-4">
+        <h3 className="text-sm font-semibold text-foreground">Subject Performance</h3>
+        <div className="mt-3 overflow-hidden rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-secondary/50 text-[10px] uppercase tracking-wide text-muted-foreground">
+                <th className="px-3 py-2 text-left font-semibold">Subject</th>
+                <th className="w-20 px-3 py-2 text-right font-semibold">Periods</th>
+                <th className="w-20 px-3 py-2 text-right font-semibold">Avg</th>
+              </tr>
+            </thead>
+            <tbody>
+              {subjectRows.map((r) => (
+                <tr key={r.subject} className="border-t border-border">
+                  <td className="px-3 py-2 text-foreground">
+                    {r.subject}
+                    <span className="ml-1 text-[10px] text-muted-foreground">{r.teacher}</span>
+                  </td>
+                  <td className="px-3 py-2 text-right font-semibold text-foreground">{r.periods}</td>
+                  <td className="px-3 py-2 text-right text-muted-foreground">{r.avg !== null ? r.avg.toFixed(1) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </Disclosure>
-
-      <Disclosure open={showRounds} onToggle={() => setShowRounds((v) => !v)} label="Round history">
-        <div className="pt-2">
-          <RoundsList cls={cls} evals={evals} totalStudents={students.length} />
-        </div>
-      </Disclosure>
+      </div>
     </div>
   );
 }
