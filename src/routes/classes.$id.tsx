@@ -285,91 +285,88 @@ function TimetableTab({ cls }: { cls: ClassId }) {
   );
 }
 
-// -------- Syllabus (per-subject progress, formerly Subjects tab) --------
-function SyllabusTab({ cls }: { cls: ClassId }) {
+// -------- Overview --------
+function useClassTotals(cls: ClassId) {
+  return useMemo(() => {
+    let weekly = 0;
+    const subjects = new Set<string>();
+    const subjectPeriods = new Map<string, { teacher: string; periods: number }>();
+    for (const d of DAYS) for (const p of PERIODS) {
+      for (const s of SCHEDULE[d][p]) {
+        if (s.className !== cls) continue;
+        weekly += 1;
+        if (!s.subjectSpecified) continue;
+        subjects.add(s.subject);
+        const row = subjectPeriods.get(s.subject) ?? { teacher: s.teacher, periods: 0 };
+        row.periods += 1;
+        subjectPeriods.set(s.subject, row);
+      }
+    }
+    return { weekly, subjects, subjectPeriods };
+  }, [cls]);
+}
+
+function OverviewTab({ cls }: { cls: ClassId }) {
+  const { weekly, subjects } = useClassTotals(cls);
+  const studentsQ = useQuery({ queryKey: ["students", cls], queryFn: () => fetchStudents(cls) });
+  const evalsQ = useQuery({ queryKey: ["evaluations", "class", cls], queryFn: () => fetchEvaluations({ classId: cls }) });
   const settingsQ = useQuery({ queryKey: ["syllabus_settings"], queryFn: fetchSyllabusSettings });
   const statusQ = useQuery({
     queryKey: ["syllabus_status", "class", cls, settingsQ.data?.academic_year_name],
     enabled: !!settingsQ.data,
     queryFn: () => fetchSyllabusStatus({ classId: cls, academicYear: settingsQ.data!.academic_year_name }),
   });
-  const evalsQ = useQuery({ queryKey: ["evaluations", "class", cls], queryFn: () => fetchEvaluations({ classId: cls }) });
 
-  const groups = useMemo(() => {
-    const map = new Map<string, { teacher: string; subject: string; weekly: number }[]>();
-    for (const d of DAYS) for (const p of PERIODS) {
-      for (const s of SCHEDULE[d][p]) {
-        if (s.className !== cls || !s.subjectSpecified) continue;
-        const arr = map.get(s.teacher) ?? [];
-        const existing = arr.find((x) => x.subject === s.subject);
-        if (existing) existing.weekly++;
-        else arr.push({ teacher: s.teacher, subject: s.subject, weekly: 1 });
-        map.set(s.teacher, arr);
-      }
-    }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [cls]);
-
-  const statuses = statusQ.data ?? [];
+  const students = studentsQ.data ?? [];
   const evals = evalsQ.data ?? [];
 
-  const pairs = groups.flatMap(([, subs]) => subs.map((s) => ({ className: cls, subject: s.subject })));
-  const overall = summarize(statuses, pairs);
+  const rows = useMemo(() => {
+    const by = new Map<string, Evaluation[]>();
+    for (const e of evals) {
+      const arr = by.get(e.student_id) ?? [];
+      arr.push(e); by.set(e.student_id, arr);
+    }
+    return students.map((s) => ({ s, st: computeStudentStats(by.get(s.id) ?? []) }));
+  }, [students, evals]);
+
+  const withData = rows.filter((r) => r.st.totalAsked > 0);
+  const avg = withData.length ? withData.reduce((a, r) => a + r.st.totalPoints, 0) / withData.length : 0;
+  const top = [...withData].sort((a, b) => b.st.totalPoints - a.st.totalPoints)[0];
+
+  const pairs = Array.from(subjects).map((subject) => ({ className: cls, subject }));
+  const syl = summarize(statusQ.data ?? [], pairs);
 
   return (
     <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Kpi label="Students" value={students.length} />
+        <Kpi label="Subjects" value={subjects.size} />
+        <Kpi label="Periods/wk" value={weekly} />
+        <Kpi label="Avg points" value={avg.toFixed(1)} />
+      </div>
+
       <div className="card-soft p-4">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold text-foreground">Overall completion</span>
-          <span className="text-muted-foreground">{overall.completed}/{overall.total} ({overall.percent}%)</span>
+          <span className="font-semibold text-foreground">Syllabus completion</span>
+          <span className="text-muted-foreground">{syl.completed}/{syl.total} ({syl.percent}%)</span>
         </div>
         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${overall.percent}%` }} />
+          <div className="h-full rounded-full bg-primary" style={{ width: `${syl.percent}%` }} />
         </div>
       </div>
 
-      {groups.map(([teacherCode, subs]) => {
-        const teacher = TEACHER_BY_CODE[teacherCode];
-        return (
-          <div key={teacherCode} className="card-soft overflow-hidden">
-            <div className="flex items-center gap-3 border-b border-border bg-secondary/40 px-4 py-3">
-              <div className="grid h-10 w-10 place-items-center rounded-xl text-sm font-bold" style={{ backgroundColor: teacher?.color, color: teacher ? textOn(teacher.color) : "#fff" }}>
-                {teacher?.shortName ?? teacherCode}
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold text-foreground">{teacher?.fullName ?? teacherCode}</div>
-                <div className="text-[10px] text-muted-foreground">{subs.length} subjects</div>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2">
-              {subs.map((s) => {
-                const monthStatuses = statuses.filter((x) => x.subject === s.subject && x.teacher_code === teacherCode);
-                const completed = monthStatuses.filter((x) => x.status === "completed").length;
-                const totalMonths = monthStatuses.length || 1;
-                const pct = Math.round((completed / totalMonths) * 100);
-                const subjEvals = evals.filter((e) => e.subject === s.subject);
-                const marks = subjEvals.filter((e) => e.status === "answered" && typeof e.mark === "number").map((e) => e.mark!);
-                const avgMark = marks.length ? (marks.reduce((a, b) => a + b, 0) / marks.length).toFixed(1) : "—";
-                return (
-                  <div key={s.subject} className="rounded-xl border border-border bg-card p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-bold text-foreground">{s.subject}</div>
-                        <div className="text-[10px] text-muted-foreground">{s.weekly}p/wk · avg {avgMark}</div>
-                      </div>
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">{pct}%</span>
-                    </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
-                      <div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
-                    </div>
-                    <div className="mt-2 text-[10px] text-muted-foreground">{completed}/{monthStatuses.length || 0} months</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
+      <div className="card-soft p-4">
+        <div className="text-xs font-semibold text-foreground">Top student</div>
+        {top ? (
+          <Link to="/students/$id" params={{ id: top.s.id }} className="mt-2 flex items-center gap-3 rounded-xl bg-secondary/40 px-3 py-2 hover:bg-secondary">
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">#{top.s.admission_no}</div>
+            <div className="min-w-0 flex-1 text-sm font-semibold text-foreground">{top.s.name}</div>
+            <span className="shrink-0 text-sm font-bold text-primary">{top.st.totalPoints.toFixed(0)} pts</span>
+          </Link>
+        ) : (
+          <div className="mt-2 text-xs text-muted-foreground">No evaluations yet.</div>
+        )}
+      </div>
     </div>
   );
 }
