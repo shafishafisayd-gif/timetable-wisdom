@@ -1,26 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, CheckCircle2, Circle, Clock, Users } from "lucide-react";
+import { CheckCircle2, Circle } from "lucide-react";
 import {
   TEACHERS,
+  TEACHER_BY_CODE,
+  CLASSES,
+  SCHEDULE,
+  DAYS,
+  PERIODS,
+  PERIOD_TIMES,
   getTeacherStats,
   getTeacherSchedule,
-  DAYS,
-  DAY_LABELS,
-  PERIODS,
-  PERIOD_LABELS,
-  PERIOD_TIMES,
   textOn,
   type ClassId,
-  type DayCode,
 } from "@/data/timetable";
+import { fetchStudents } from "@/lib/students-api";
 import {
   fetchSyllabusSettings,
   fetchSyllabusStatus,
   getTeacherClassSubjects,
-  MONTH_LONG,
-  buildAcademicMonths,
   type SyllabusStatusRow,
   type SyllabusStatusValue,
 } from "@/lib/syllabus-api";
@@ -28,10 +27,10 @@ import {
 export const Route = createFileRoute("/stats")({
   head: () => ({
     meta: [
-      { title: "Teacher Workload Statistics · Malja'a" },
-      { name: "description", content: "Simple workload overview: periods, hours, classes, subjects and syllabus progress for every teacher at Malja'a College." },
-      { property: "og:title", content: "Teacher Workload Statistics · Malja'a" },
-      { property: "og:description", content: "Periods, teaching hours, class-wise subjects and syllabus progress for each teacher." },
+      { title: "Statistics · Malja'a Timetable" },
+      { name: "description", content: "Who teaches what: teacher workload, class-wise subjects, period counts and syllabus progress at Malja'a College." },
+      { property: "og:title", content: "Statistics · Malja'a Timetable" },
+      { property: "og:description", content: "Teacher workload, class-wise subject and period counts, and syllabus progress." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -43,6 +42,7 @@ const PERIOD_MIN = Object.fromEntries(
   PERIOD_TIMES.map((p) => [p.period, p.endMin - p.startMin]),
 ) as Record<number, number>;
 
+/** Teaching hours from every assigned period, including Sub N/S. */
 function hoursFor(code: string) {
   const sched = getTeacherSchedule(code, false);
   let min = 0;
@@ -50,317 +50,223 @@ function hoursFor(code: string) {
   return Math.round((min / 60) * 10) / 10;
 }
 
-function dayPeriods(code: string) {
+/** Class-wise breakdown of a teacher's subject-specified periods. */
+function classBreakdown(code: string) {
   const sched = getTeacherSchedule(code, false);
-  return DAYS.map((d) => ({
-    day: d as DayCode,
-    labels: PERIODS.filter((p) => sched[d][p]).map((p) => PERIOD_LABELS[p]),
-  }));
+  const map = new Map<ClassId, Map<string, number>>();
+  for (const d of DAYS) for (const p of PERIODS) {
+    const s = sched[d][p];
+    if (!s || !s.subjectSpecified) continue;
+    const m = map.get(s.className) ?? new Map<string, number>();
+    m.set(s.subject, (m.get(s.subject) ?? 0) + 1);
+    map.set(s.className, m);
+  }
+  return Array.from(map.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([cls, m]) => ({
+      cls,
+      subjects: Array.from(m.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
+    }));
 }
 
-function statusKey(r: { class_id: string; subject: string }) {
-  return `${r.class_id}|${r.subject}`;
-}
-
-function useSyllabus() {
-  const settings = useQuery({ queryKey: ["syllabus-settings"], queryFn: fetchSyllabusSettings });
-  const year = settings.data?.academic_year_name;
-  const status = useQuery({
-    queryKey: ["syllabus-status", year],
-    queryFn: () => fetchSyllabusStatus(year ? { academicYear: year } : undefined),
-    enabled: !!settings.data,
+/** Class → subject → teacher → weekly period count (subject-specified only). */
+function classSubjectTable() {
+  const out = CLASSES.map((cls) => {
+    const map = new Map<string, { subject: string; teacher: string; periods: number }>();
+    let weekly = 0;
+    for (const d of DAYS) for (const p of PERIODS) {
+      for (const s of SCHEDULE[d][p]) {
+        if (s.className !== cls) continue;
+        weekly += 1;
+        if (!s.subjectSpecified) continue;
+        const key = `${s.subject}|${s.teacher}`;
+        const row = map.get(key) ?? { subject: s.subject, teacher: s.teacher, periods: 0 };
+        row.periods += 1;
+        map.set(key, row);
+      }
+    }
+    return {
+      cls,
+      weekly,
+      rows: Array.from(map.values()).sort((a, b) => a.subject.localeCompare(b.subject)),
+    };
   });
-  const months = settings.data
-    ? buildAcademicMonths(settings.data.start_month, settings.data.end_month)
-    : [];
-  const nowMonth = new Date().getMonth() + 1;
-  const month = months.find((m) => m.month === nowMonth)?.month ?? months[0]?.month ?? nowMonth;
-  const rows = (status.data ?? []).filter((r) => r.month === month);
-  return { month, rows, year };
+  return out;
 }
 
-function progressFor(
-  code: string,
-  rows: SyllabusStatusRow[],
-): { pairs: { className: ClassId; subject: string }[]; map: Map<string, SyllabusStatusValue>; done: number; total: number; percent: number } {
-  const pairs = getTeacherClassSubjects(code).map((p) => ({ className: p.className, subject: p.subject }));
+function syllabusFor(code: string, rows: SyllabusStatusRow[]) {
+  const pairs = getTeacherClassSubjects(code);
   const map = new Map<string, SyllabusStatusValue>();
-  for (const r of rows) if (r.teacher_code === code) map.set(statusKey(r), r.status);
-  const done = pairs.filter((p) => map.get(`${p.className}|${p.subject}`) === "completed").length;
-  return { pairs, map, done, total: pairs.length, percent: pairs.length ? Math.round((done / pairs.length) * 100) : 0 };
+  for (const r of rows) if (r.teacher_code === code) map.set(`${r.class_id}|${r.subject}`, r.status);
+  const items = pairs.map((p) => ({
+    className: p.className,
+    subject: p.subject,
+    status: map.get(`${p.className}|${p.subject}`) ?? ("not_started" as SyllabusStatusValue),
+  }));
+  const completed = items.filter((i) => i.status === "completed").length;
+  return {
+    items,
+    completed,
+    pending: items.length - completed,
+    total: items.length,
+    percent: items.length ? Math.round((completed / items.length) * 100) : 0,
+  };
 }
 
 function Stats() {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [classFilter, setClassFilter] = useState<"ALL" | ClassId>("ALL");
-  const [subjectFilter, setSubjectFilter] = useState<"ALL" | string>("ALL");
-  const { month, rows } = useSyllabus();
+  const settingsQ = useQuery({ queryKey: ["syllabus_settings"], queryFn: fetchSyllabusSettings });
+  const statusQ = useQuery({
+    queryKey: ["syllabus_status", "all", settingsQ.data?.academic_year_name],
+    enabled: !!settingsQ.data,
+    queryFn: () => fetchSyllabusStatus({ academicYear: settingsQ.data!.academic_year_name }),
+  });
+  const studentsQ = useQuery({ queryKey: ["students", "all"], queryFn: () => fetchStudents() });
 
-  const data = useMemo(
+  const rows = statusQ.data ?? [];
+
+  const teachers = useMemo(
     () =>
       TEACHERS.map((t) => {
-        const s = getTeacherStats(t.code);
-        const prog = progressFor(t.code, rows);
-        return { teacher: t, stats: s, hours: hoursFor(t.code), prog };
-      }),
+        const stats = getTeacherStats(t.code);
+        return {
+          teacher: t,
+          stats,
+          hours: hoursFor(t.code),
+          breakdown: classBreakdown(t.code),
+          syl: syllabusFor(t.code, rows),
+        };
+      }).sort((a, b) => b.stats.totalWeeklyPeriods - a.stats.totalWeeklyPeriods),
     [rows],
   );
 
-  const subjects = useMemo(
-    () => Array.from(new Set(data.flatMap((d) => d.stats.subjects))).sort(),
-    [data],
-  );
-
-  const list = data.filter((d) => {
-    if (classFilter !== "ALL" && !d.stats.classesAssigned.includes(classFilter)) return false;
-    if (subjectFilter !== "ALL" && !d.stats.subjects.includes(subjectFilter)) return false;
-    return true;
-  });
-
-  if (selected) {
-    const entry = data.find((d) => d.teacher.code === selected);
-    if (entry) return <TeacherDetail entry={entry} month={month} onBack={() => setSelected(null)} />;
-  }
+  const classes = useMemo(classSubjectTable, []);
+  const totalPeriods = classes.reduce((a, c) => a + c.weekly, 0);
+  const sylTotal = teachers.reduce((a, t) => a + t.syl.total, 0);
+  const sylDone = teachers.reduce((a, t) => a + t.syl.completed, 0);
+  const sylPct = sylTotal ? Math.round((sylDone / sylTotal) * 100) : 0;
 
   return (
     <div className="space-y-5">
       <section className="card-soft p-5">
-        <h1 className="text-xl font-bold text-foreground">Teacher Statistics</h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          Workload, classes, subjects and syllabus progress · {MONTH_LONG[month - 1]}
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <select
-            value={classFilter}
-            onChange={(e) => setClassFilter(e.target.value as "ALL" | ClassId)}
-            className="rounded-xl border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="ALL">All classes</option>
-            {["S1", "S2", "S3", "S4", "S5", "S6", "S7"].map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-          <select
-            value={subjectFilter}
-            onChange={(e) => setSubjectFilter(e.target.value)}
-            className="rounded-xl border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="ALL">All subjects</option>
-            {subjects.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+        <h1 className="text-xl font-bold text-foreground">Statistics</h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">Who teaches what, how many periods, and syllabus progress.</p>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <Kpi label="Teachers" value={TEACHERS.length} />
+          <Kpi label="Classes" value={CLASSES.length} />
+          <Kpi label="Students" value={studentsQ.data?.length ?? 0} />
+          <Kpi label="Periods/wk" value={totalPeriods} />
+          <Kpi label="Syllabus" value={`${sylPct}%`} />
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {list.map(({ teacher, stats, hours, prog }) => (
-          <button
-            key={teacher.code}
-            onClick={() => setSelected(teacher.code)}
-            className="card-soft p-4 text-left transition hover:shadow-[var(--shadow-lift)] active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-bold"
-                style={{ backgroundColor: teacher.color, color: textOn(teacher.color) }}
-              >
-                {teacher.shortName}
-              </div>
-              <div className="min-w-0">
-                <div className="text-base font-semibold leading-tight text-foreground">{teacher.fullName}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">
-                  {stats.totalWeeklyPeriods} Periods · {hours} hrs · {stats.totalClasses} Classes · {stats.subjects.length} Subjects
+      <section className="space-y-3">
+        <h2 className="text-sm font-bold text-foreground">Teacher Workload</h2>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {teachers.map(({ teacher, stats, hours, breakdown, syl }) => (
+            <div key={teacher.code} className="card-soft p-4">
+              <Link to="/teachers/$code" params={{ code: teacher.code }} className="flex items-center gap-3">
+                <div
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-bold"
+                  style={{ backgroundColor: teacher.color, color: textOn(teacher.color) }}
+                >
+                  {teacher.shortName}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-base font-semibold leading-tight text-foreground">{teacher.fullName}</div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    {stats.totalWeeklyPeriods} Periods · {stats.totalClasses} Classes · {stats.subjects.length} Subjects · {hours} Hours
+                  </div>
+                </div>
+              </Link>
+
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Syllabus</span>
+                  <span className="font-semibold text-foreground">{syl.percent}% · {syl.completed} done · {syl.pending} pending</span>
+                </div>
+                <div className="mt-1 h-2 overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${syl.percent}%` }} />
                 </div>
               </div>
-            </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-between text-xs font-medium">
-                <span className="text-muted-foreground">Syllabus</span>
-                <span className="text-foreground">{prog.percent}% completed</span>
-              </div>
-              <div className="mt-1 h-2 overflow-hidden rounded-full bg-secondary">
-                <div className="h-full rounded-full bg-primary" style={{ width: `${prog.percent}%` }} />
-              </div>
-            </div>
-            <div className="mt-3 text-xs font-semibold text-primary">View Details →</div>
-          </button>
-        ))}
-      </div>
 
-      {list.length === 0 && (
-        <div className="card-soft p-10 text-center text-sm text-muted-foreground">No teachers match these filters.</div>
-      )}
-    </div>
-  );
-}
+              {breakdown.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {breakdown.map((b) => (
+                    <div key={b.cls} className="flex flex-wrap items-baseline gap-x-2 text-xs">
+                      <span className="font-bold text-foreground">{b.cls}</span>
+                      <span className="text-muted-foreground">
+                        {b.subjects.map(([sub, n]) => `${sub} — ${n}`).join(" · ")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
-function Card({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div className="rounded-2xl bg-secondary/60 px-3 py-3 text-center">
-      <div className="text-lg font-bold leading-none text-foreground">{value}</div>
-      <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
-    </div>
-  );
-}
+              {syl.items.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {syl.items.map((i) => (
+                    <span
+                      key={`${i.className}|${i.subject}`}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-medium ${
+                        i.status === "completed" ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {i.status === "completed" ? <CheckCircle2 className="h-3 w-3" /> : <Circle className="h-3 w-3" />}
+                      {i.className} {i.subject}
+                    </span>
+                  ))}
+                </div>
+              )}
 
-function TeacherDetail({
-  entry,
-  month,
-  onBack,
-}: {
-  entry: { teacher: (typeof TEACHERS)[number]; stats: ReturnType<typeof getTeacherStats>; hours: number; prog: ReturnType<typeof progressFor> };
-  month: number;
-  onBack: () => void;
-}) {
-  const { teacher, stats, hours, prog } = entry;
-  const sched = getTeacherSchedule(teacher.code, false);
-
-  // Class-wise subject breakdown (only explicitly specified subjects)
-  const byClass = useMemo(() => {
-    const map = new Map<ClassId, Map<string, number>>();
-    for (const d of DAYS)
-      for (const p of PERIODS) {
-        const s = sched[d][p];
-        if (!s || !s.subjectSpecified) continue;
-        const m = map.get(s.className) ?? new Map<string, number>();
-        m.set(s.subject, (m.get(s.subject) ?? 0) + 1);
-        map.set(s.className, m);
-      }
-    return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([cls, m]) => ({
-        cls,
-        subjects: Array.from(m.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
-        total: Array.from(m.values()).reduce((a, b) => a + b, 0),
-      }));
-  }, [sched]);
-
-  const syllabusByClass = useMemo(() => {
-    const map = new Map<ClassId, { subject: string; status: SyllabusStatusValue }[]>();
-    for (const p of prog.pairs) {
-      const arr = map.get(p.className) ?? [];
-      arr.push({ subject: p.subject, status: prog.map.get(`${p.className}|${p.subject}`) ?? "not_started" });
-      map.set(p.className, arr);
-    }
-    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [prog]);
-
-  return (
-    <div className="space-y-5">
-      <section className="card-soft p-5">
-        <button onClick={onBack} className="mb-3 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> All teachers
-        </button>
-        <div className="flex items-center gap-3">
-          <div
-            className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl text-lg font-bold"
-            style={{ backgroundColor: teacher.color, color: textOn(teacher.color) }}
-          >
-            {teacher.shortName}
-          </div>
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold leading-tight text-foreground">{teacher.fullName}</h1>
-            <div className="text-xs text-muted-foreground">{teacher.position} · <span className="font-mono">{teacher.code}</span></div>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <Card label="Periods" value={stats.totalWeeklyPeriods} />
-          <Card label="Hours" value={hours} />
-          <Card label="Classes" value={stats.totalClasses} />
-          <Card label="Subjects" value={stats.subjects.length} />
-          <Card label="Syll. done" value={prog.done} />
-          <Card label="Syll. pending" value={prog.total - prog.done} />
-        </div>
-        {stats.subjectUnspecifiedPeriods > 0 && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            Includes {stats.subjectUnspecifiedPeriods} teacher-only period(s) with no subject specified.
-          </p>
-        )}
-        <Link
-          to="/teachers/$code"
-          params={{ code: teacher.code }}
-          className="mt-3 inline-block text-xs font-semibold text-primary"
-        >
-          Open teacher page →
-        </Link>
-      </section>
-
-      <section className="card-soft p-5">
-        <h2 className="flex items-center gap-2 text-sm font-bold text-foreground"><Clock className="h-4 w-4 text-primary" /> Weekly Periods</h2>
-        <div className="mt-3 space-y-2">
-          {dayPeriods(teacher.code).map(({ day, labels }) => (
-            <div key={day} className="flex flex-wrap items-center gap-2 rounded-xl bg-secondary/50 px-3 py-2">
-              <span className="w-24 shrink-0 text-xs font-semibold text-foreground">{DAY_LABELS[day]}</span>
-              {labels.length === 0 ? (
-                <span className="text-xs text-muted-foreground">No periods</span>
-              ) : (
-                labels.map((l) => (
-                  <span key={l} className="rounded-lg bg-background px-2 py-0.5 text-[11px] font-semibold text-foreground">{l}</span>
-                ))
+              {stats.subjectUnspecifiedPeriods > 0 && (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  Includes {stats.subjectUnspecifiedPeriods} Sub N/S period(s) — counted as workload, not as syllabus subjects.
+                </p>
               )}
             </div>
           ))}
         </div>
-        <p className="mt-3 text-xs font-medium text-muted-foreground">
-          Weekly Total: <span className="text-foreground">{stats.totalWeeklyPeriods} Periods</span> · Teaching Hours: <span className="text-foreground">{hours} hrs</span>
-        </p>
       </section>
 
-      <section className="card-soft p-5">
-        <h2 className="flex items-center gap-2 text-sm font-bold text-foreground"><Users className="h-4 w-4 text-primary" /> Class-wise Subjects</h2>
-        <div className="mt-3 space-y-4">
-          {byClass.map((c) => (
-            <div key={c.cls}>
-              <div className="text-sm font-bold text-foreground">{c.cls}</div>
-              <div className="mt-1.5 overflow-hidden rounded-xl border border-border">
+      <section className="space-y-3">
+        <h2 className="text-sm font-bold text-foreground">Class-wise Subjects &amp; Periods</h2>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {classes.map((c) => (
+            <div key={c.cls} className="card-soft p-4">
+              <div className="flex items-center justify-between">
+                <Link to="/classes/$id" params={{ id: c.cls }} search={{ tab: "timetable" }} className="text-sm font-bold text-foreground">
+                  Class {c.cls}
+                </Link>
+                <span className="text-xs text-muted-foreground">{c.weekly} periods/wk</span>
+              </div>
+              <div className="mt-2 overflow-hidden rounded-xl border border-border">
                 <table className="w-full text-sm">
                   <tbody>
-                    {c.subjects.map(([sub, n]) => (
-                      <tr key={sub} className="border-b border-border last:border-0">
-                        <td className="px-3 py-2 text-foreground">{sub}</td>
-                        <td className="w-20 px-3 py-2 text-right font-semibold text-foreground">{n}</td>
+                    {c.rows.map((r) => (
+                      <tr key={`${r.subject}|${r.teacher}`} className="border-b border-border last:border-0">
+                        <td className="px-3 py-2 text-foreground">{r.subject}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">
+                          {TEACHER_BY_CODE[r.teacher]?.shortName ?? r.teacher}
+                        </td>
+                        <td className="w-16 px-3 py-2 text-right font-semibold text-foreground">{r.periods}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div className="mt-1 text-xs text-muted-foreground">{c.cls} Total: {c.total} Periods</div>
             </div>
           ))}
-          {byClass.length === 0 && <p className="text-sm text-muted-foreground">No subject-specified periods.</p>}
         </div>
       </section>
+    </div>
+  );
+}
 
-      <section className="card-soft p-5">
-        <h2 className="flex items-center gap-2 text-sm font-bold text-foreground"><BookOpen className="h-4 w-4 text-primary" /> Syllabus Status · {MONTH_LONG[month - 1]}</h2>
-        <div className="mt-2 text-xs text-muted-foreground">
-          Completed: {prog.done} / {prog.total} · Pending: {prog.total - prog.done} · Progress: {prog.percent}%
-        </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${prog.percent}%` }} />
-        </div>
-        <div className="mt-4 space-y-3">
-          {syllabusByClass.map(([cls, items]) => (
-            <div key={cls}>
-              <div className="text-sm font-bold text-foreground">{cls}</div>
-              <div className="mt-1 space-y-1">
-                {items.map((it) => (
-                  <div key={it.subject} className="flex items-center justify-between rounded-xl bg-secondary/50 px-3 py-2 text-sm">
-                    <span className="text-foreground">{it.subject}</span>
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${it.status === "completed" ? "text-success" : it.status === "in_progress" ? "text-warning" : "text-muted-foreground"}`}>
-                      {it.status === "completed" ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
-                      {it.status === "completed" ? "Completed" : it.status === "in_progress" ? "In progress" : "Pending"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-          {syllabusByClass.length === 0 && <p className="text-sm text-muted-foreground">No syllabus subjects.</p>}
-        </div>
-      </section>
+function Kpi({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="rounded-2xl bg-secondary/60 px-3 py-3 text-center">
+      <div className="text-lg font-bold leading-none text-foreground">{value}</div>
+      <div className="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
     </div>
   );
 }
