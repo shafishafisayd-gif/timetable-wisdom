@@ -37,6 +37,7 @@ import {
   setSyllabusStatus,
   summarize,
   type SyllabusStatusValue,
+  syllabusLabel,
 } from "@/lib/syllabus-api";
 
 
@@ -463,7 +464,7 @@ function SyllabusTracker({ teacher }: { teacher: Teacher }) {
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Overall completion</span>
             <span className="font-semibold text-foreground">
-              {overall.completed}/{overall.total} ({overall.percent}%)
+              {overall.completed}/{overall.total} ({syllabusLabel(overall.total, overall.completed)})
             </span>
           </div>
           <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
@@ -526,7 +527,7 @@ function SyllabusTracker({ teacher }: { teacher: Teacher }) {
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="text-sm font-bold text-foreground">{sum.percent}%</div>
+                  <div className="text-sm font-bold text-foreground">{syllabusLabel(sum.total, sum.completed)}</div>
                   <div className="text-[10px] text-muted-foreground">
                     {sum.completed}/{sum.total} done
                   </div>

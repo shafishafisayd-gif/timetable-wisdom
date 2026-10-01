@@ -220,6 +220,11 @@ export async function fetchSyllabusHistory(opts?: {
   return (data ?? []) as SyllabusHistoryRow[];
 }
 
+/** Single rule for every page: no valid syllabus subjects → "N/A", never "0%". */
+export function syllabusLabel(total: number, completed: number): string {
+  return total > 0 ? `${Math.round((completed / total) * 100)}%` : "N/A";
+}
+
 export interface SyllabusMonthStats {
   total: number;
   completed: number;

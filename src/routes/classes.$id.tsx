@@ -36,6 +36,7 @@ import {
   fetchSyllabusSettings,
   fetchSyllabusStatus,
   summarize,
+  syllabusLabel,
 } from "@/lib/syllabus-api";
 import { useNow } from "@/lib/use-now";
 
@@ -348,7 +349,7 @@ function OverviewTab({ cls }: { cls: ClassId }) {
       <div className="card-soft p-4">
         <div className="flex items-center justify-between text-xs">
           <span className="font-semibold text-foreground">Syllabus completion</span>
-          <span className="text-muted-foreground">{syl.completed}/{syl.total} ({syl.percent}%)</span>
+          <span className="text-muted-foreground">{syl.completed}/{syl.total} ({syllabusLabel(syl.total, syl.completed)})</span>
         </div>
         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-secondary">
           <div className="h-full rounded-full bg-primary" style={{ width: `${syl.percent}%` }} />
