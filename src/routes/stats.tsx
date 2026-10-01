@@ -22,6 +22,7 @@ import {
   getTeacherClassSubjects,
   type SyllabusStatusRow,
   type SyllabusStatusValue,
+  syllabusLabel,
 } from "@/lib/syllabus-api";
 
 export const Route = createFileRoute("/stats")({

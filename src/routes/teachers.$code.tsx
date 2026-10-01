@@ -37,6 +37,7 @@ import {
   setSyllabusStatus,
   summarize,
   type SyllabusStatusValue,
+  syllabusLabel,
 } from "@/lib/syllabus-api";
 
 

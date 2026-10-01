@@ -36,6 +36,7 @@ import {
   fetchSyllabusSettings,
   fetchSyllabusStatus,
   summarize,
+  syllabusLabel,
 } from "@/lib/syllabus-api";
 import { useNow } from "@/lib/use-now";
 

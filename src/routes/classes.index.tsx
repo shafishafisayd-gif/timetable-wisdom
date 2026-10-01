@@ -14,6 +14,7 @@ import {
   fetchSyllabusSettings,
   fetchSyllabusStatus,
   summarize,
+  syllabusLabel,
 } from "@/lib/syllabus-api";
 
 export const Route = createFileRoute("/classes/")({
