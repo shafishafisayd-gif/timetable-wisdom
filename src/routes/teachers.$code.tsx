@@ -22,6 +22,7 @@ import {
   textOn,
   type DayCode,
   type Teacher,
+  getTeacherHours,
 } from "@/data/timetable";
 import { useTempVersion } from "@/lib/temp-timetable";
 import { useNow } from "@/lib/use-now";
@@ -146,7 +147,7 @@ function TeacherPage() {
         <StatCard label="Total Assigned" value={stats.totalWeeklyPeriods} />
         <StatCard label="Subject Specified" value={stats.subjectSpecifiedPeriods} />
         <StatCard label="Sub N/S" value={stats.subjectUnspecifiedPeriods} />
-        <StatCard label="Teaching Hrs" value={`${(stats.totalWeeklyPeriods * 0.67).toFixed(1)}`} />
+        <StatCard label="Teaching Hrs" value={getTeacherHours(teacher.code)} />
       </div>
       )}
 

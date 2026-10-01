@@ -226,7 +226,7 @@ function StudentRow({ r, highlight }: { r: Row; highlight: string }) {
       className="flex items-center gap-3 rounded-xl border border-border bg-card p-2.5 transition hover:border-red-400/50"
     >
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-foreground">{r.student.name}</div>
+        <div className="break-words text-sm font-semibold text-foreground">{r.student.name}</div>
         <div className="truncate text-[10px] text-muted-foreground">
           Class {r.student.class_id} · {teacherNames || "—"} · last {lastStr}
         </div>

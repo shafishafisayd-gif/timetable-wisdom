@@ -247,7 +247,7 @@ function SubjectBlock({ subject, teacherCodes, rows }: { subject: string; teache
                     {initials(r.student.name)}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-xs font-semibold">{r.student.name}</div>
+                    <div className="break-words text-xs font-semibold">{r.student.name}</div>
                     <div className="truncate text-[10px] text-muted-foreground">
                       #{r.student.admission_no} · asked {r.asked} · ✓{r.answered} · −{r.notAnswered} · A{r.absent} · avg {r.avg.toFixed(1)}
                     </div>

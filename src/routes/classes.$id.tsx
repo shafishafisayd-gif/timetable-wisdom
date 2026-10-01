@@ -22,6 +22,7 @@ import {
   textOn,
   jsDayToCode,
   type ClassId,
+  getClassTotals,
 } from "@/data/timetable";
 import { StudentsSection } from "@/components/StudentsSection";
 import {
@@ -288,23 +289,7 @@ function TimetableTab({ cls }: { cls: ClassId }) {
 
 // -------- Overview --------
 function useClassTotals(cls: ClassId) {
-  return useMemo(() => {
-    let weekly = 0;
-    const subjects = new Set<string>();
-    const subjectPeriods = new Map<string, { teacher: string; periods: number }>();
-    for (const d of DAYS) for (const p of PERIODS) {
-      for (const s of SCHEDULE[d][p]) {
-        if (s.className !== cls) continue;
-        weekly += 1;
-        if (!s.subjectSpecified) continue;
-        subjects.add(s.subject);
-        const row = subjectPeriods.get(s.subject) ?? { teacher: s.teacher, periods: 0 };
-        row.periods += 1;
-        subjectPeriods.set(s.subject, row);
-      }
-    }
-    return { weekly, subjects, subjectPeriods };
-  }, [cls]);
+  return useMemo(() => getClassTotals(cls), [cls]);
 }
 
 function OverviewTab({ cls }: { cls: ClassId }) {
@@ -472,7 +457,7 @@ function PerformanceList({
             <Link key={r.s.id} to="/students/$id" params={{ id: r.s.id }} className="flex items-center gap-3 rounded-xl bg-secondary/40 px-3 py-2 hover:bg-secondary">
               <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">#{r.s.admission_no}</div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-foreground">{r.s.name}</div>
+                <div className="break-words text-sm font-semibold text-foreground">{r.s.name}</div>
                 <div className="text-[10px] text-muted-foreground">Asked {r.st.totalAsked} · avg {r.st.averageMark.toFixed(1)}</div>
               </div>
               <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${chip}`}>

@@ -9,7 +9,8 @@ import {
   SCHEDULE,
   DAYS,
   PERIODS,
-  PERIOD_TIMES,
+  getClassTotals,
+  getTeacherHours,
   getTeacherStats,
   getTeacherSchedule,
   textOn,
@@ -39,18 +40,6 @@ export const Route = createFileRoute("/stats")({
   component: Stats,
 });
 
-const PERIOD_MIN = Object.fromEntries(
-  PERIOD_TIMES.map((p) => [p.period, p.endMin - p.startMin]),
-) as Record<number, number>;
-
-/** Teaching hours from every assigned period, including Sub N/S. */
-function hoursFor(code: string) {
-  const sched = getTeacherSchedule(code, false);
-  let min = 0;
-  for (const d of DAYS) for (const p of PERIODS) if (sched[d][p]) min += PERIOD_MIN[p] ?? 40;
-  return Math.round((min / 60) * 10) / 10;
-}
-
 /** Class-wise breakdown of a teacher's subject-specified periods. */
 function classBreakdown(code: string) {
   const sched = getTeacherSchedule(code, false);
@@ -70,29 +59,11 @@ function classBreakdown(code: string) {
     }));
 }
 
-/** Class → subject → teacher → weekly period count (subject-specified only). */
 function classSubjectTable() {
-  const out = CLASSES.map((cls) => {
-    const map = new Map<string, { subject: string; teacher: string; periods: number }>();
-    let weekly = 0;
-    for (const d of DAYS) for (const p of PERIODS) {
-      for (const s of SCHEDULE[d][p]) {
-        if (s.className !== cls) continue;
-        weekly += 1;
-        if (!s.subjectSpecified) continue;
-        const key = `${s.subject}|${s.teacher}`;
-        const row = map.get(key) ?? { subject: s.subject, teacher: s.teacher, periods: 0 };
-        row.periods += 1;
-        map.set(key, row);
-      }
-    }
-    return {
-      cls,
-      weekly,
-      rows: Array.from(map.values()).sort((a, b) => a.subject.localeCompare(b.subject)),
-    };
+  return CLASSES.map((cls) => {
+    const t = getClassTotals(cls);
+    return { cls, weekly: t.weekly, rows: t.rows };
   });
-  return out;
 }
 
 function syllabusFor(code: string, rows: SyllabusStatusRow[]) {
@@ -132,7 +103,7 @@ function Stats() {
         return {
           teacher: t,
           stats,
-          hours: hoursFor(t.code),
+          hours: getTeacherHours(t.code),
           breakdown: classBreakdown(t.code),
           syl: syllabusFor(t.code, rows),
         };
