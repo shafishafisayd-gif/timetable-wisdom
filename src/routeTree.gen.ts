@@ -9,43 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TimetableRouteImport } from './routes/timetable'
-import { Route as TempTimetableRouteImport } from './routes/temp-timetable'
-import { Route as StatsRouteImport } from './routes/stats'
-import { Route as RankingsRouteImport } from './routes/rankings'
-import { Route as PerformanceRouteImport } from './routes/performance'
-import { Route as AttentionRouteImport } from './routes/attention'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TeachersIndexRouteImport } from './routes/teachers.index'
+import { Route as AttentionRouteImport } from './routes/attention'
+import { Route as PerformanceRouteImport } from './routes/performance'
+import { Route as RankingsRouteImport } from './routes/rankings'
+import { Route as StatsRouteImport } from './routes/stats'
+import { Route as TempTimetableRouteImport } from './routes/temp-timetable'
+import { Route as TimetableRouteImport } from './routes/timetable'
 import { Route as ClassesIndexRouteImport } from './routes/classes.index'
-import { Route as TeachersCodeRouteImport } from './routes/teachers.$code'
-import { Route as StudentsIdRouteImport } from './routes/students.$id'
 import { Route as ClassesIdRouteImport } from './routes/classes.$id'
+import { Route as StudentsIdRouteImport } from './routes/students.$id'
+import { Route as TeachersIndexRouteImport } from './routes/teachers.index'
+import { Route as TeachersCodeRouteImport } from './routes/teachers.$code'
 import { Route as SessionClassSubjectRouteImport } from './routes/session.$class.$subject'
 
-const TimetableRoute = TimetableRouteImport.update({
-  id: '/timetable',
-  path: '/timetable',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TempTimetableRoute = TempTimetableRouteImport.update({
-  id: '/temp-timetable',
-  path: '/temp-timetable',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const StatsRoute = StatsRouteImport.update({
-  id: '/stats',
-  path: '/stats',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RankingsRoute = RankingsRouteImport.update({
-  id: '/rankings',
-  path: '/rankings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PerformanceRoute = PerformanceRouteImport.update({
-  id: '/performance',
-  path: '/performance',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AttentionRoute = AttentionRouteImport.update({
@@ -53,14 +33,29 @@ const AttentionRoute = AttentionRouteImport.update({
   path: '/attention',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const PerformanceRoute = PerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TeachersIndexRoute = TeachersIndexRouteImport.update({
-  id: '/teachers/',
-  path: '/teachers/',
+const RankingsRoute = RankingsRouteImport.update({
+  id: '/rankings',
+  path: '/rankings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TempTimetableRoute = TempTimetableRouteImport.update({
+  id: '/temp-timetable',
+  path: '/temp-timetable',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TimetableRoute = TimetableRouteImport.update({
+  id: '/timetable',
+  path: '/timetable',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClassesIndexRoute = ClassesIndexRouteImport.update({
@@ -68,9 +63,9 @@ const ClassesIndexRoute = ClassesIndexRouteImport.update({
   path: '/classes/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TeachersCodeRoute = TeachersCodeRouteImport.update({
-  id: '/teachers/$code',
-  path: '/teachers/$code',
+const ClassesIdRoute = ClassesIdRouteImport.update({
+  id: '/classes/$id',
+  path: '/classes/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudentsIdRoute = StudentsIdRouteImport.update({
@@ -78,9 +73,14 @@ const StudentsIdRoute = StudentsIdRouteImport.update({
   path: '/students/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ClassesIdRoute = ClassesIdRouteImport.update({
-  id: '/classes/$id',
-  path: '/classes/$id',
+const TeachersIndexRoute = TeachersIndexRouteImport.update({
+  id: '/teachers/',
+  path: '/teachers/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeachersCodeRoute = TeachersCodeRouteImport.update({
+  id: '/teachers/$code',
+  path: '/teachers/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SessionClassSubjectRoute = SessionClassSubjectRouteImport.update({
@@ -201,39 +201,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/timetable': {
-      id: '/timetable'
-      path: '/timetable'
-      fullPath: '/timetable'
-      preLoaderRoute: typeof TimetableRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/temp-timetable': {
-      id: '/temp-timetable'
-      path: '/temp-timetable'
-      fullPath: '/temp-timetable'
-      preLoaderRoute: typeof TempTimetableRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/stats': {
-      id: '/stats'
-      path: '/stats'
-      fullPath: '/stats'
-      preLoaderRoute: typeof StatsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rankings': {
-      id: '/rankings'
-      path: '/rankings'
-      fullPath: '/rankings'
-      preLoaderRoute: typeof RankingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/performance': {
-      id: '/performance'
-      path: '/performance'
-      fullPath: '/performance'
-      preLoaderRoute: typeof PerformanceRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/attention': {
@@ -243,18 +215,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AttentionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/performance': {
+      id: '/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof PerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/teachers/': {
-      id: '/teachers/'
-      path: '/teachers'
-      fullPath: '/teachers/'
-      preLoaderRoute: typeof TeachersIndexRouteImport
+    '/rankings': {
+      id: '/rankings'
+      path: '/rankings'
+      fullPath: '/rankings'
+      preLoaderRoute: typeof RankingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/temp-timetable': {
+      id: '/temp-timetable'
+      path: '/temp-timetable'
+      fullPath: '/temp-timetable'
+      preLoaderRoute: typeof TempTimetableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/timetable': {
+      id: '/timetable'
+      path: '/timetable'
+      fullPath: '/timetable'
+      preLoaderRoute: typeof TimetableRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/classes/': {
@@ -264,11 +257,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClassesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/teachers/$code': {
-      id: '/teachers/$code'
-      path: '/teachers/$code'
-      fullPath: '/teachers/$code'
-      preLoaderRoute: typeof TeachersCodeRouteImport
+    '/classes/$id': {
+      id: '/classes/$id'
+      path: '/classes/$id'
+      fullPath: '/classes/$id'
+      preLoaderRoute: typeof ClassesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/students/$id': {
@@ -278,11 +271,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/classes/$id': {
-      id: '/classes/$id'
-      path: '/classes/$id'
-      fullPath: '/classes/$id'
-      preLoaderRoute: typeof ClassesIdRouteImport
+    '/teachers/': {
+      id: '/teachers/'
+      path: '/teachers'
+      fullPath: '/teachers/'
+      preLoaderRoute: typeof TeachersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teachers/$code': {
+      id: '/teachers/$code'
+      path: '/teachers/$code'
+      fullPath: '/teachers/$code'
+      preLoaderRoute: typeof TeachersCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/session/$class/$subject': {
