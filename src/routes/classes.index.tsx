@@ -72,6 +72,7 @@ function ClassesIndex() {
         subjects: t.subjects.size,
         weekly: t.weekly,
         syllabusPct: syl.percent,
+        syllabusLabel: syllabusLabel(syl.total, syl.completed),
       };
     });
   }, [studentsQ.data, statusQ.data]);
@@ -111,7 +112,7 @@ function ClassesIndex() {
             <div>
               <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 <span>Syllabus</span>
-                <span>{c.syllabusPct}%</span>
+                <span>{c.syllabusLabel}</span>
               </div>
               <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary">
                 <div className="h-full rounded-full bg-primary" style={{ width: `${c.syllabusPct}%` }} />

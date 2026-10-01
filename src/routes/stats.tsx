@@ -155,7 +155,7 @@ function Stats() {
           <Kpi label="Classes" value={CLASSES.length} />
           <Kpi label="Students" value={studentsQ.data?.length ?? 0} />
           <Kpi label="Periods/wk" value={totalPeriods} />
-          <Kpi label="Syllabus" value={`${sylPct}%`} />
+          <Kpi label="Syllabus" value={syllabusLabel(sylTotal, sylDone)} />
         </div>
       </section>
 
@@ -182,7 +182,7 @@ function Stats() {
               <div className="mt-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Syllabus</span>
-                  <span className="font-semibold text-foreground">{syl.percent}% · {syl.completed} done · {syl.pending} pending</span>
+                  <span className="font-semibold text-foreground">{syllabusLabel(syl.total, syl.completed)} · {syl.completed} done · {syl.pending} pending</span>
                 </div>
                 <div className="mt-1 h-2 overflow-hidden rounded-full bg-secondary">
                   <div className="h-full rounded-full bg-primary" style={{ width: `${syl.percent}%` }} />
