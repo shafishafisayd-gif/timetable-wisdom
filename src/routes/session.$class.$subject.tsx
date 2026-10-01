@@ -53,7 +53,7 @@ export const Route = createFileRoute("/session/$class/$subject")({
   }),
   component: SessionPage,
   errorComponent: ({ error }) => (
-    <div className="card-soft p-6 text-sm text-destructive" role="alert">{error.message}</div>
+    <div className="card-soft p-6 text-sm text-destructive" role="alert">{error instanceof Error ? error.message : String(error)}</div>
   ),
   notFoundComponent: () => <div className="card-soft p-6 text-sm">Session not found.</div>,
 });
