@@ -928,3 +928,54 @@ export function formatTime12(hhmm: string): string {
   else if (h > 12) h -= 12;
   return `${h}:${m} ${am ? "AM" : "PM"}`;
 }
+
+// ---------- Shared permanent-timetable calculations (single source for every page) ----------
+
+/** Actual duration (minutes) of each period — periods are not all equal. */
+export const PERIOD_MINUTES = Object.fromEntries(
+  PERIOD_TIMES.map((p) => [p.period, p.endMin - p.startMin]),
+) as Record<PeriodNum, number>;
+
+/** Weekly teaching hours from every permanently assigned period (incl. Sub N/S), using real durations. */
+export function getTeacherHours(code: string): number {
+  const sched = getTeacherSchedule(code, false);
+  let min = 0;
+  for (const d of DAYS) for (const p of PERIODS) if (sched[d][p]) min += PERIOD_MINUTES[p];
+  return Math.round((min / 60) * 10) / 10;
+}
+
+export interface ClassTotals {
+  /** Assigned periods incl. Sub N/S; excludes break/free/activity. */
+  weekly: number;
+  /** Unique academic subjects (Sub N/S excluded). */
+  subjects: Set<string>;
+  /** Subject → periods (all teachers) and first teacher. */
+  subjectPeriods: Map<string, { teacher: string; periods: number }>;
+  /** Subject + teacher → periods, sorted by subject. */
+  rows: { subject: string; teacher: string; periods: number }[];
+}
+
+/** Permanent weekly totals for a class. */
+export function getClassTotals(cls: ClassId): ClassTotals {
+  let weekly = 0;
+  const subjects = new Set<string>();
+  const subjectPeriods = new Map<string, { teacher: string; periods: number }>();
+  const byPair = new Map<string, { subject: string; teacher: string; periods: number }>();
+  for (const d of DAYS) for (const p of PERIODS) {
+    for (const s of SCHEDULE[d][p]) {
+      if (s.className !== cls || !s.teacher) continue;
+      weekly += 1;
+      if (!s.subjectSpecified || s.subject === SUBJECT_UNSPECIFIED) continue;
+      subjects.add(s.subject);
+      const sp = subjectPeriods.get(s.subject) ?? { teacher: s.teacher, periods: 0 };
+      sp.periods += 1;
+      subjectPeriods.set(s.subject, sp);
+      const k = `${s.subject}|${s.teacher}`;
+      const row = byPair.get(k) ?? { subject: s.subject, teacher: s.teacher, periods: 0 };
+      row.periods += 1;
+      byPair.set(k, row);
+    }
+  }
+  const rows = [...byPair.values()].sort((a, b) => a.subject.localeCompare(b.subject) || a.teacher.localeCompare(b.teacher));
+  return { weekly, subjects, subjectPeriods, rows };
+}

@@ -115,7 +115,7 @@ export function StudentsSection({ classId, highlightId }: { classId: ClassId; hi
                 #{s.admission_no}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-foreground">{s.name}</div>
+                <div className="break-words text-sm font-semibold text-foreground">{s.name}</div>
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
                   <span className="rounded-full bg-secondary px-1.5 py-0.5 font-semibold">{s.class_id}</span>
                   {st && st.totalAsked > 0 ? (

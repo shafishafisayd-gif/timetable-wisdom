@@ -2,13 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, GraduationCap, TrendingUp, Users } from "lucide-react";
-import {
-  CLASSES,
-  SCHEDULE,
-  DAYS,
-  PERIODS,
-  type ClassId,
-} from "@/data/timetable";
+import { CLASSES, getClassTotals, type ClassId } from "@/data/timetable";
 import { fetchStudents } from "@/lib/students-api";
 import {
   fetchSyllabusSettings,
@@ -31,21 +25,6 @@ export const Route = createFileRoute("/classes/")({
   component: ClassesIndex,
 });
 
-/** Weekly periods (incl. Sub N/S) and specified subjects for each class. */
-function classTotals() {
-  const map = new Map<ClassId, { weekly: number; subjects: Set<string> }>();
-  for (const c of CLASSES) map.set(c, { weekly: 0, subjects: new Set() });
-  for (const d of DAYS) for (const p of PERIODS) {
-    for (const s of SCHEDULE[d][p]) {
-      const row = map.get(s.className);
-      if (!row) continue;
-      row.weekly += 1;
-      if (s.subjectSpecified) row.subjects.add(s.subject);
-    }
-  }
-  return map;
-}
-
 function ClassesIndex() {
   const settingsQ = useQuery({ queryKey: ["syllabus_settings"], queryFn: fetchSyllabusSettings });
   const statusQ = useQuery({
@@ -56,15 +35,14 @@ function ClassesIndex() {
   const studentsQ = useQuery({ queryKey: ["students", "all"], queryFn: () => fetchStudents() });
 
   const cards = useMemo(() => {
-    const totals = classTotals();
-    const studentsByClass = new Map<ClassId, number>();
+        const studentsByClass = new Map<ClassId, number>();
     for (const s of studentsQ.data ?? []) {
       studentsByClass.set(s.class_id, (studentsByClass.get(s.class_id) ?? 0) + 1);
     }
     const statuses = statusQ.data ?? [];
 
     return CLASSES.map((cls) => {
-      const t = totals.get(cls)!;
+      const t = getClassTotals(cls);
       const pairs = Array.from(t.subjects).map((subject) => ({ className: cls, subject }));
       const syl = summarize(statuses.filter((s) => s.class_id === cls), pairs);
       return {
